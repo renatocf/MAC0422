@@ -1,0 +1,89 @@
+História dos Sistemas Operacionais
+====================================
+
+* De forma geral, a Computação repete invenções antigas. No caso dos SOs,
+  houve a ascensção dos servidores, a substituição por computadores
+  pessoais e, agora, a volta dos servidores com sistemas de nuvens.
+
+* Linha do tempo:
+    - Babbage (1792-1871)
+      Máquina de calcular mecânica
+    
+    - Compudator moderno (1940)
+      - Cálculos para construir a primeira bomba atômica
+      - John von Neumann (Princeton/Harvard)
+      - Não havia ainda sistema operacional (programação era feita
+        redirecionando os circuítos entre portas lógicas do hardware)
+      - Programação = "Redrawing"
+    
+    - Transistores (1960)
+      - Transistores substituiíram as válvulas, o que permitiu construir
+        sistemas mais complexos e programáveis.
+      - Programação em binário.
+      - Começou a fazer sentido criar um conjunto de rotinas que 
+        automatizassem comandos comuns de entrada e saída. Essa 
+        agregação gerou os primeiros SOs (que eram bibliotecas).
+      - O primeiro SO eram o dos batches, que incluíam um sistema
+        de controle pararodar os processos.
+      - As informações eram guardadas em fitas magnéticas, e vários
+        computadores eram responsáveis por cada função (entrada, saída).
+      - A saída padrão eram impressoras ou fitas magnéticas.
+      - A entrada padrão era o teclado, mas mais para o operador.
+      - Quando criou-se o sistema batch, ele funcionava como um 
+        aviso para os programadores.
+      - Depois, descobriu-se que a maiorai dos programas perdiam mais
+        tempo em entrada e saída. Por isso, surgiram os computadores
+        multiprogramados - que aceitavam vários programas, cada um 
+        fazendo alguma modificação.
+      - Surgiram linguagens de alto nível, que convertiam para 
+        assembly: LISP (1958), FORTRAN (1954), ALGOL (1958).
+      - 2 tipos de computadores: 
+        - Científicos: com Fortran, voltados a processamento
+        - Comerciais: com Cobol, voltados à entrada e saída
+    
+    - Circuítos integrados
+      - A IBM criou a série IBM/360 - uma série de computadores com 
+        circuítos integrados que tinham compatibilidade na linguagem
+        de máquina: um programa compilado em um rodaria em outro.
+      - Multics: sistema operacional que permitiria atender vários
+        usuários ao mesmo tempo (processamento científico, iterativo,
+        comercial, etc). Ele criou um sistema de prioridades que 
+        permitia distribuir o usoda CPU entre os computadores. O nome
+        Unix veio de uma brincadeia com o nome Multics.
+      - O ideal, nesse momento, é que a CPU trabalhasse 100% a todo 
+        o momento.
+      - Criou-se um sistema que permitia memória virtual - o usuário
+        não precisava olhar mais para um endereço no disco diretamente,
+        pois quem fazia isso era o hardware.
+      - Key Thompson criou o UNICS, uma versão simplificada do MULTICS.
+      - David Ritchie cria a linguagem C e rescreve o UNICS na sua
+        linguagem: nasce o UNIX.
+      - Steve Jobs e Steve Wozniack criaram uma plataforma de slots de
+        tamanho padronizado, que permitiam fazer substituições. Esse 
+        foi o lançamento da Apple, o Apple I.
+      - Steve Jobs criou o Lisa, de arquitetura fechada. A IBM criou
+        uma arquiteturade 16 bits aberta, e o SO para ela foi o MS-DOS,
+        futuramente o Windows.
+      - Os computadores carregavam seus programas usando disquetes.
+    
+    - Sistemas distribuídos
+      - Acreditou-se que os servidores morreriam, substituídos por 
+        vários computadores em rede integrados.
+      - O conjunto de instruções crescia cada vez mais - CISC
+      - A Sun fez, então, um computador que tinha o contrário: reduziu
+        o conjunto de instruções (RISC), com várias instruções pequenas
+        e de rápida execução, facilmente otimizáveis pelos compiladores.
+      - O sistema distribuído era uma forma de associar em que era 
+        transparente a existência dos computadores.
+      - A área de compiladores e bancos de dados se separaram dos 
+        sistemas operacionais, e se dessenvolveram independentemente.
+      - MINIX: 
+        - primeira versão do UNIX para PC;
+        - gratuíto;
+        - voltado para o ensino de sistemas operacionais;
+        - em 1957, a AT&T fechou o código do UNIX. O MINIX foi criado
+          com a mesma interface do UNIX para ajudar no ensino de 
+          computação;
+        - muito modular (drivers rodam fora do kernel);
+        - foi feito para ser lido, não para ser eficiente;
+        - compatível com a versão 7 do UNIX.
