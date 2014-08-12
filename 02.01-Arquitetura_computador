@@ -1,0 +1,301 @@
+ARQUITETURA COMPUTADOR
+
+* O computador modero é composto de várias partes
+    - Barramento: Canal de comunicação entre componentes do computador
+    - CPU: Processamento e controle entre componentes
+    - Memória: Memória secundária não durável
+    - Controlador de Vídeo: Faz a interface com o monitor (foi
+      introduzido pela Xerox na década de 1980)
+    - Controlador de Teclado: Componente para entrada
+    - Controlador do HD: Disco Rígido durável
+
+* A velocidade de acesso entre memórias é bem diferente. A memória
+  interna (cache), muito rápido e em vários níveis, a memória RAM e
+  o disco rígido (muito lento)
+
+* Barramento
+    - Trilhas comunicando uma ou mais dispositivos apenas uma mensagem
+      de cada vez
+
+* Processador
+    - Contador, pilha, PSW (prog. Status word), modo usuário e
+      privilegiado (algumas instruções só podem ser executadas no 
+      modo de supervisão), multicore x singlecore (um core apenas
+      será usado para a maioria dos algoritmos)
+    - Trap (interrupção): sinal eletrônico que faz o proessador entrar
+      em modo privilegiado e muda o programa para um endereço pré-
+      especificado. Cada interrupção faz com que seja realizada alguma
+      ação, sendo que elas estão armazenadas em um vetor de 
+      interrupções. Essas rotinas e o vetor são carregados assim
+      que acontece o boot do SO.
+
+* Memoria
+    - Proteção e troca de contexto: memória virtual, código realocável
+    - A memória virtual é uma abstração: ela é, de fato, separada usando
+      partes. Porém, existe um hardware específico que permite mudar a
+      memória.
+    - O hardware tem um registro das regiões que cada programa pode 
+      acessar. Se ele sair da região, é dado um sinal específico que
+      "mata" o programa (falha de segmentação)
+
+* DIscos
+    - Prato, superfície, cilindros, trilhas, setores, cabeças.
+    
+                                        .------ cabeça para
+            .----------------------.    '------ gravação
+           / .--- trilha ---------. \    --.
+          / /                      \ \     | cilindro
+         / '------------------------' \  --'
+        '------------------------------' --.
+        '------------------------------'   | pratos
+        '------------------------------'   | 
+        '------------------------------' --'
+        Setor: mínimo de bytes que podem ser escritos na memória
+    
+    - A taxa de transferência para o disco é muito lento, porque 
+      a rotação do disco demora em taxa de nanossegundos
+
+* Outros dispositivos de I/O:
+    - Discos, vídeo, teclado, mouse, interfaces de rede, etc.
+    - CPU não se comunica com dispositos (em geral, analódigos), mas 
+      com o circuíto difital de controle (controlador)
+    - Controladores sãoconectados ao barramento, via alguns
+      registradores mapenados na CPU
+    - Cada controlador tem associado um "device driver" (interfaces
+      padrão para acesso aos sistemas, convertidos via programas
+      específicos em assembly)
+    - Quando acabou? "bus waiting" ou interrupção.
+
+* Processos
+    - Um programa sendo executado
+    - Linha de processamento, registradores (pilha, etc.) e estado da
+      memória.
+    - 5 estados possíveis: rodando, pronto, bloqueado, suspenso
+      (bloqueado e pronto)
+    
+                         .-------.
+                         |Running| ---> Terminate
+                         '-------'
+                preempt / ^       \ block
+                       ^ / Run     ^ 
+                  .-----.        .-------.
+       Create --->|Ready|<-------|blocked|
+                  '-----'        '-------'
+                    | ^    unblock  | ^
+                    | |             | |
+            Suspend | | Resume      | | Resume
+                    | |      Suspend| |
+                    ^ |             ^ |
+              .---------.          .---------.
+              |  Ready  | <------- | Blocked |
+              |Suspended|  unblock |Suspended|
+              '---------'          '---------'
+    
+    - Estados:
+        - Blocked: Esperando pelo resultado de uma chamada ao sistema
+        - Ready:   Pronto para rodar, mas não necessariamente rodando
+                   (outro programa de maior prioridade pode estar 
+                   ocupando a CPU. Nesse estado, ele só precisa ocupar
+                   a CPU)
+        - Blocked Suspended: Se muitos programas estão rodando ao 
+                             mesmo programa, um programa pode ser 
+                             suspendo, e fica aguardando até que
+                             o sistema se desocupe. Nesse estado,
+                             ele ainda está aguardando por alguma
+                             chamada ao sistema.
+        - Ready Suspended:   Quando o programa recebe sua requisição
+                             ao SO, fica Ready, mas ainda estará 
+                             suspenso.
+        - Running:           O programa ocupando a CPU.
+    
+* Multiprogramação
+    - CPU deve ser otimizada com relação à execução (geralmente,
+      programas com muito IO tem prioridade, porque eles usam a 
+      CPU e ficam bloqueados enquanto esperam as (demoradas) ações
+      de IO).
+    - O sistema mostrado acima é o pseudo-paralelismo da CPU.
+    - Threads (processos leves): linha de processamento distinta,no
+      contexto de registradores, com mesmo estado de memória. Usar
+      threads é diferente de criar processos filhos, porque neste
+      caso cada um tem seu espaço de memória, e naquele, a memória
+      é compartilhada dentro do processo.
+
+    - Tabela de processos: guarda quais processos estão rodando, e a
+      ordem em que são trocados.
+    - Processos não podem assumir nada em relação a tempo real (porque
+      estão ou não executando).
+
+* Minix
+    - Anos 80: A AT&T fecha o código do sistema Unix (S7) e proíbe seu
+               ensino em universidades (para lucrar)
+    - Dificuldade de construção de SO leva muitos cursos a se tornarem
+      teóricas ou a propor apenas pequenas simulações.
+    - Tanembaum se propõe a construir Minix:
+        - Compatível com a versão 7 do Unix (mesmas chamadas de sistema
+          e escrito para ser lido, com fácil modificação):
+            - Código C
+            - Extremamente modularizado
+            - Forte uso de comentários (original com 11.000 linhas de
+              código e 3.000 linhas de comentários)
+            - Fácil modificação
+            - Fontes disponíveis
+        - SO "de verdade"
+
+* Processos (Minix)
+    - Processos podem se comunicar
+    
+    - Organização hierárquiva (Minix/Unix/Linux)
+        - UID (User ID)
+        - Obs: instrução 'fork' cria novo processo (clonado a partir do 
+               processo-pai, com registradores, processos, pilha, etc. 
+               todos iguais). O retorno do UID é 0 para o filho e o UID 
+               do filho para o pai.
+        - Os filhos só podem saber quem são seus pais usando os meios
+          de comunicação:
+            - Mensagens: Entre processos
+            - Arquivos: Escrecendo entre um e outro
+            - Pipes (|): Muito mais rápido que usar os arquivos, porque
+              cria-se um buffer na memória, em ve de um arquivo no
+              disco.
+            - Sinais (signal): espécie de sinal assíncrono que faz com 
+              que o receptor tenha código desviado para endereço 
+              pré-determinado. 
+              
+              Os sinais fazem com que o outro programa tenha alguma ação 
+              parecida com uma interrupção. O destinatário pode ou não 
+              tratá-lo. Se tratar, a ação é parecida com a de
+              interrupção. Porém, em vez de ir para um local
+              pré-determinado no hardware, pode ir para outro.
+
+* Arquivos Minix
+    - Organização hierárquica
+        - Diretório root (começando com /)
+        - Caminhos absolutos e relativos (o diretório atual é guardado 
+          na tabela de processos)
+        
+    - Proteção 8 bits (rwx)
+    - Arquivo especial:
+        - Acesso transparente ao I/O
+        - Bloco (disco): lê no apontador, e permite acesso aleatório.
+          Eles pode ser alterado usando "seek" (para mudar o local)
+          ou ler (com "read").
+          Caracter (teclado, tela, etc.): só podem ser usados para ler 
+          ou escrever diretamente (read/write), pois não é possível
+          "voltar" para o passado.
+        - Todos os arquivos tÊm um DESCRITOR DE ARQUIVO.
+        - Standard input/output: descritores de arquivo 0 e 1
+          (geralmente, são o teclado e a tela)
+        - Montar/desmontar (mount/umount): utilizado para acesso a
+          periféricos de maneira modular (criando os diretórios 
+          de dentro desse arquivo especial em algum subdiretório).
+          A pasta padrão é /dev (device)
+        - Major device number (tipo)/minor device number
+            /dev/hda0, /dev/hda1
+                 ^^^'- minor device number
+                  '--- major device number
+
+* Estrutura do Minix
+  
+  .--------------------------------------------------------------.
+ 4| User process | User process | User process |      ...        | }User
+  |--------------'--.-----------'-.------------'.----------------| }
+ 3| Process manager | File system | Info server | Network server | }space
+  |-------------.---'--------.----'------------.'----------------| }
+ 2| Disk driver | TTY driver | Ethernet driver |       ...       | }
+  |-------------'------------'.----------------'.----------------|
+ 1|           Kernel          |   System task   |   Clock task   | Kernel
+  '--------------------------------------------------------------' space
+
+    - Cada layer se comunica somente com uma camada abaixo dele.
+      O espaço do kernel tem o gerenciado básico do sistema e o relógio,
+      usado para os sistemas básicos (camada do Kernel).
+    - A segunda camada (drivers) são os programas que servem de
+      interface para os componentes eletrônicos.
+    - A terceira camada (servidores) são os que se comunicam com os
+      programas, e são todos são os que podem se comunicar com os que
+      estão abaixo.
+    - A quarta cadafa são os processos normais do usuário, se
+      comunicando com servidores de cada camada.
+    
+
+* Chamadas de sistema no Minix
+    - Para os programas, se comunicar com o SO são funções em C
+      armazenadas em uma biblioteca.
+    - Cada chamada de sistema manda um sinal que gera uma interrupção, e
+      o SO, ao vê-lo, desempacota a rotina correspondente. O programa do
+      usuário manda a requisição aos servidores, e estes comunicam-se
+      com o driver.
+    - Chamadas de sistema do Minix
+        - Fork (única maneira de criar novos processos)
+            - Gera duas cópias idênticas nas memórias separadas
+            - Chamada volta zer para processo gilho, e pid para
+              o processo pai
+        
+        - Wait()
+            - Processo pai aguarda o final de execução de umdos filhos
+        
+        - Execve(name,argv,envp)
+            - A imagem do processo é substituída pelo conteúdo de um
+              arquivo, passados argumentos e ambientes (que descreve o
+              terminal, etc).
+            - Essa é a maneira de um programa "mutar", e deixar de ser
+              igual ao processo pai. A imagem vem de algum arquivo
+              executável, que deve ser passado como argumento.
+
+        - Exit()
+            - Termina o processo e retorna o parâmetro como código de
+              saída (o zero representa OK). O código único (0) é bom
+              porque todos os outros podem ser usados como erro.
+
+        - brk()
+            - Altera o tamanho da área de dados do parâmetro
+                                
+                               .---------------.
+              Se, ao dar um    :     stack     : Empilhamento
+              "push" na pilha  :       |       : (aumentado via push)
+              e ele invadir    :       ^       : 
+              o brk, haverá    :               : 
+              um sinal de erro :       ^       : 
+              um erro.         :       |       : Memória dinâmica
+                               :     heap      : (aumentada via brk)
+              O malloc tenta   :---------------: 
+              ver se áreas da  :     bss       : 
+              heap liberadas   :---------------: 
+              podem ser usadas :     data      : Dados de argv
+              para novas       :---------------: 
+              alocações. Caso  :     text      : Programa em si
+              não possa, tenta '---------------' 
+              brk. Se não der,
+              retorna que não 
+              há mais espaço 
+              para alocação
+        
+        - getpid()
+            - Peda o ID do processo (para poder comunicar via fork).
+        
+        - signal(sig,func)
+            - Determina captura de um sinal pela função func (em geral,
+              se não der para tratar, o processo é morto.
+        
+        - kill(pid,signal)
+            - Manda um sinal a um processo
+        
+        - alarm(seconds)
+            - Agenda um envio do sinal SIGALARM, para que o processo
+              seja avaliado depois de certo tempo. Usando signal,
+              é possível dar tratamentos depois.
+        
+        - pause()
+            - Suspende p processo ae queeste rebeba o próximo sinal.
+
+        - creat(name,mode)
+            - Cria um novo arquivo e acre, ou abre e seta o tamanho para
+              zero, retornando o descritor (como 'touch')
+
+        - mknod(nome,mode,addr)
+            - Cria um i-node regular, especial ou de diretório, retorna
+              um descritor. "Addr" é major + minor device number.
+
+        - open(file,how)
+            - Abre um arquivo considerando o nome dele e se terá
+              leitura/escrita. Devolve um descritor de arquivo.
