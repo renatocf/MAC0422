@@ -217,6 +217,33 @@ ARQUITETURA COMPUTADOR
     - A quarta cadafa são os processos normais do usuário, se
       comunicando com servidores de cada camada.
     
+    - 4 camadas: kernal (escalonamento de processos, tempo, tabelas,
+      sistema de mensagens), drivers (abstração dos dispositivos), 
+      estratégias de escalonamento, sistema de arquivo e comunicação 
+      (apresentam "máquina virtual"), processos de usuário.
+    - Apenas 1 camada em "espaço de kernel".
+    - Outras camandas possuem processos sem compartilhamento de memória:
+      comunicação por mensagens. As mensagens são implementadas usando um
+      chamada de sistemas específica. Essas mensagens têm uma estrutura 
+      específica, em que é guardada um ponteiro para o texto e o processo
+      que enviou. A pessoa que enviou é bloqueado enquando ocorre a
+      mensagem. O recebedor terá a mensagem COPIADA dentro do outro 
+      processo, para ser lida. Quem implementa esse envio é o SO, fazendo
+      a parte do baixo nível. O processo que ENVIA manda uma mensagem
+      com a chamada 'send'. O processo querecebe fica com um 'receive',
+      aguardando até receber algo. O 'send-receive' faz uma chamada e
+      espera por ela. Esse processo é síncrono.
+    - A mensagem é um processo síncrono, e é bem diferentes de sinais.
+      Os sinais são processos ASSÍNCRONOS, em que o programa é 
+      interrompido no meio de qualquer ação.
+    - O envio de mensagens é feito nas camadas inferiores, ABAIXO de
+      servidores. Para as aplicações, existe a biblioteca de programas de
+      chamadas ao sistema, que fazem por si próprias mensagens para os
+      componentes corretos.
+    - Sinais são tratados pelo Kernel, ao receber alguma transmissão, 
+      via o barramento, de um componente do hardware. Ele gera uma 
+      mensagem e envia para o Kernel correspondente.
+    - Essa arquitetura é a arquitetura de microkernel.
 
 * Chamadas de sistema no Minix
     - Para os programas, se comunicar com o SO são funções em C
@@ -226,29 +253,40 @@ ARQUITETURA COMPUTADOR
       usuário manda a requisição aos servidores, e estes comunicam-se
       com o driver.
     - Chamadas de sistema do Minix
-        - Fork (única maneira de criar novos processos)
+        - fork (única maneira de criar novos processos)
             - Gera duas cópias idênticas nas memórias separadas
             - Chamada volta zer para processo gilho, e pid para
               o processo pai
         
-        - Wait()
+        - wait()
             - Processo pai aguarda o final de execução de umdos filhos
         
-        - Execve(name,argv,envp)
+        - execve(name,argv,envp)
             - A imagem do processo é substituída pelo conteúdo de um
               arquivo, passados argumentos e ambientes (que descreve o
               terminal, etc).
             - Essa é a maneira de um programa "mutar", e deixar de ser
               igual ao processo pai. A imagem vem de algum arquivo
               executável, que deve ser passado como argumento.
-
-        - Exit()
+        
+        - exit()
             - Termina o processo e retorna o parâmetro como código de
               saída (o zero representa OK). O código único (0) é bom
               porque todos os outros podem ser usados como erro.
 
         - brk()
             - Altera o tamanho da área de dados do parâmetro
+                
+                Estrutura do programa
+                --------- .----------.
+                    |     | Símbolos | Símbolos de #define do programa
+                    |     |----------| 
+                    |     | Data     | Dados de entrada do programa
+                    |     |----------| 
+                    |     | Text     | Programa de fato
+                    |     |----------| 
+                    |     | Header   | Área do programa com informações
+                --------- '----------' dos campos acima
                                 
                                .---------------.
               Se, ao dar um    :     stack     : Empilhamento
@@ -257,28 +295,45 @@ ARQUITETURA COMPUTADOR
               o brk, haverá    :               : 
               um sinal de erro :       ^       : 
               um erro.         :       |       : Memória dinâmica
-                               :     heap      : (aumentada via brk)
+                               :     heap      : (aumenta/diminui via brk)
               O malloc tenta   :---------------: 
-              ver se áreas da  :     bss       : 
-              heap liberadas   :---------------: 
-              podem ser usadas :     data      : Dados de argv
+              ver se áreas da  :               : área para dados
+              heap liberadas   :     bss       : estáticos não
+              podem ser usadas :               : inicializados
               para novas       :---------------: 
-              alocações. Caso  :     text      : Programa em si
-              não possa, tenta '---------------' 
-              brk. Se não der,
-              retorna que não 
-              há mais espaço 
+              alocações. Caso  :     data      : Dados pré-definidos
+              não possa, tenta :---------------: 
+              brk. Se não der, :     text      : Programa em si
+              retorna que não  '---------------' 
+              há mais espaço
               para alocação
+            
+              Quando há acesso FORA do frame, o sistema operacional
+              MATA o programa.
         
         - getpid()
-            - Peda o ID do processo (para poder comunicar via fork).
+            - Pede o ID do processo (para poder comunicar via fork).
         
         - signal(sig,func)
             - Determina captura de um sinal pela função func (em geral,
-              se não der para tratar, o processo é morto.
+              se não der para tratar, o processo é morto).
+              
+              Os sinais são, para o software, o mesmo que uma
+              interrupção para o hardware.
+                
+                                       .---------------.
+                  .----.           .-- |     Pilha     |
+                  | PC |   empilha |   |---------------|
+                  '----'    o PC   '-> |      PC       |
+                                       |---------------|
+                           Pula para   |               |
+                           o sinal...  |               |
+                                       '---------------'
         
         - kill(pid,signal)
-            - Manda um sinal a um processo
+            - Manda um sinal a um processo. Existe um sinal KILL
+              que realmente mata um processo - mas, de forma geral,
+              ele só funciona para processos filhos.
         
         - alarm(seconds)
             - Agenda um envio do sinal SIGALARM, para que o processo
@@ -287,15 +342,122 @@ ARQUITETURA COMPUTADOR
         
         - pause()
             - Suspende p processo ae queeste rebeba o próximo sinal.
-
+        
         - creat(name,mode)
             - Cria um novo arquivo e acre, ou abre e seta o tamanho para
               zero, retornando o descritor (como 'touch')
-
+        
         - mknod(nome,mode,addr)
             - Cria um i-node regular, especial ou de diretório, retorna
               um descritor. "Addr" é major + minor device number.
-
+        
         - open(file,how)
             - Abre um arquivo considerando o nome dele e se terá
               leitura/escrita. Devolve um descritor de arquivo.
+        
+        - close(fd)
+            - Fecha um arquivo aberto.
+            - É importante para que os i-nodes sejam salvos, o que
+              não ocorre se morrer.
+
+        - read(fd,buffer,nbytes)
+            - Lê dados em um buffer, retorna bytes lidos.
+            - Lê até nbytes, ou menos. Retorna o número de bytes 
+              realmente gravados.
+        
+        - write(fd,buffer,nbytes)
+            - Grava dados de um buffer e retorna o número de bytes
+              gravados (porque poderia dar problemas).
+        
+        - lseek(fd,offset,whence)
+            - Muda o poteiro do arquivo, retona a nova posição para
+              posição. Whente indica se o offset relativo à posição
+              atual, início ou fim.
+        
+        - stat(name,&buf),fstat(fd,&buf)
+            - Lê e retorna o estado do arquivo
+        
+        - dup(fd1)
+            - Aloca um novo descritor de arquivos (número que descreve
+              qual é o i-node que representa o arquivo) para o arquivo 
+              aberto. Dup cria um novo número para o mesmo i-node.
+            - Dup costuma ser útil para SUBSTITUIR o arquivo apontado
+              por aquele descritor específico, e depois retornar. É
+              útil principalmente para redirecionar stdin e stdout.
+            - Ex:
+                fd = dup(1);
+                close(1);   // LIBERA o descritor '1'
+                open(name); // Pega o MENOR descritor o possível: no
+                ...         // caso, será o 1
+                ...
+                close(1);
+                dup(fd);    // Agora, dup pegará o menor fd disponível.
+                            // Ele será, novamente, 1
+
+        - pipe(&fd[0])
+            - Cria um pipe, retorna fd de leitura e escrita no vetor.
+            - Ex:
+                Pipeline(process1, process2)
+                char *process1, *process2; // nomes dos programas
+                {
+                    int fd[2];
+                    pipe(&fd[0]);
+                    if(fork() != 0)
+                    {
+                        /* Processo pai, escreve no filho */
+                        close(fd[0]);  // este processo não lerá
+                                       // do pipe. Pode fechá-lo
+                        close(stdout); // Fechamos stdout para 
+                                       // para liberar o fd
+                        dup(fd[1]);    // Pega a saída do pipe e
+                                       // a associa ao menor fd
+                                       // disponível: stdout.
+                        close(fd[1]);  // Não precisa mais do pipe,
+                                       // e libera esse descritor.
+                        
+                        execl(process1,process1,0);
+                        // Roda o processo e os outros
+                    }
+                    else
+                    {
+                        /* Processo filho, lê do pipe */
+                        close(fd[1]);  // este processo não escreverá
+                                       // no pipe. Pode fechá-lo
+                        close(stdin);  // Fechamos stdin para 
+                                       // liberar o fd
+                        dup(fd[0])     // Pega a saída do pipe a 
+                                       // a associa ao menor fd
+                                       // disponível: stdin
+                        close(fd[0]);  // Não precisa mais do pipe,
+                                       // e libera esse descritor.
+                        
+                        execl(process2,process2,0);
+                        // Roda o processo e os outros
+                    }
+                }
+        
+        - ioctl(fd,request,argp)
+            - Executa operações em arquivos especiais (em geral
+              terminais)
+        
+        - link(name1,name2)
+            - Faz entrada name2 ser o mesmo i-node que name1
+        
+        - unlink(name)
+            - Remove uma entrada do diretório corrente
+        
+        - mount(special,name,rwflag)
+            - Monta um sistema de arquivos
+        
+        - unmount(special)
+            - Desmonta um sistema de arquivos
+
+        - sync()
+            - Sincroniza todos os blocos de disco do cache
+        
+        - chdir(name)
+            - Muda o diretório corrente
+            - O cd, do Bash, usa esse programa
+
+        - chroot(dirname)
+            - Muda o diretório raiz (cuidado)
