@@ -461,3 +461,35 @@ ARQUITETURA COMPUTADOR
 
         - chroot(dirname)
             - Muda o diretório raiz (cuidado)
+            - Funciona APENAS para a shell correspondente
+            - Ela é perigosa porque os comandos dentro daquele contexto
+              usarão comandos em outros lugares - e, nesse caso, pode-se
+              dar problemas. Por esse motivo, chroot só funciona como
+              superusuário.
+        
+        - chmod(name,mode)
+            - Muda os bits de proteção do arquivo
+        
+        - uid = getuid()
+            - Retorna o UID do usuário
+        
+        - gid = getgid()
+            - Retorna o GID do usuário.
+        
+        - setuid()
+            - Muda o UID do usuário.
+        
+        - setgid()
+            - Muda o GID do usuário.
+        
+        - time(&seconds)
+            - Retorna o tempo em segundos desde 1/1/1970.
+        
+        - stime(tp)
+            - Reinicializa o tempo desde 1/1/1970.
+        
+        - utime(file,timep)
+            - Seta o valor do último acesso do arquivo.
+        
+        - times(bufer)
+            - Retorna o tempo do usuário e de sistema.
