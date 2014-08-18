@@ -1,0 +1,129 @@
+Tabela de Processos
+======================
+
+* A partir desse momento, consideraremos o modelo de SO single core.
+* Armazena dados sobre cada processo necessários à sua execução.
+* Essencial para troca de contexto.
+    - Na tabela de processos, estão todos os dados relacionados ao
+      processo e que são necessários para executá-los. Uma das 
+      informações essenciais é a dos registradores.
+    - De forma geral, a memória da tabela de processos fica no Kernel.
+      Porém, no Minix, como há um microkernel, mesmo a tabela de
+      processos está separada pelo SO.
+* Informações sempre devem estar presentes.
+* No Minix, existem cópias parciais da tabela nos processos servidores.
+    - Atualizações são feitas por mensagens, de modo a manter as 
+      tabelas de vários locais sincronizadas.
+    - Para haver a comunicação, é necessário que o Kernel pareça uma
+      mensagem. O "System task" é uma parte do Kernel que age como
+      um processo, podendo receber os sinais.
+
+* Partes databela de processos
+    - Kernel
+        - Registradores
+        - Program counter (PC)
+        - Program Status Word (PSW)
+            Registrador do hardware usado para proteção e permissões.
+        - Stack pointer (registradores da pilha)
+        - Process state (rodando, pronto, bloqueado e suspenso)
+        - Prioridade atual do processo
+        - Prioridade máxima do processo
+        - Tamanho do quantum (máximo de ticks possíveis)
+            Gerencia o máximo de tempo (contado por interrupções do
+            relógio) que o processo irá rodar. Isso limita o tempo 
+            de uso da CPU.
+        - Total de ticks restantes para o processo
+            Contador para verificar quanto tempo falta para acabar.
+        - Tempo de CPU já utilizado
+        - Ponteiro para fila de mensagens
+        - Vetor de sinais ("interrupção do software")
+        - Bits para Flags
+        - Nome do processo
+    
+    - Gerenciamento de processos
+        - Ponteiro para o segmento de texto (código binário) do processo
+        - Ponteiro para o segmento de dados (dados pré-definidos) do
+          processo.
+        - Ponteiro para o segmento de bss (dados estáticos não     
+          inicializados) do processo.
+        - Status de saída
+        - Status de sinal
+        - ID do processo
+        - Processo pai
+        - Processo de grupo
+        - Tempo de CPU para o filho
+        - UID Real
+        - UID Efetivo
+            É mudado para poder alterar arquivos como o de senhas
+            (que pertence ao superusuário) para mudá-lo.
+        - GID Real
+        - GID Efetivo
+        - Informações de arquivos para compartilhar texto
+        - Bitmap para sinais
+        - Bits para flags
+        - Nome do processo
+    
+    - Gerenciamento de arquivos
+        - Máscara UMASK
+        - Diretório raiz
+        - Diretório de trabalho
+        - Descritor de arquivos
+        - UID Real
+        - UID Efetivo
+        - GID Real
+        - GID Efetivo
+        - TTY controladora (terminal)
+        - Área para leitura/ecrita
+        - Parâmetros de chamadas de sistemas
+        - Bits para flags
+
+* Processos: esquema de interrupção e hardware
+    - Associado acada classe de dispositivo de entrada/saída, existe uma
+      entrada em um vetor chamado VETOR DE INTERRUPÇÃO
+        - É um dos primeiros a serem carregados ao inicializar o SO.
+        - Torinas de baixíssmo nível.
+        - COntém endereços do procedimento de serviço da interrupção.
+    - Quando ocorre uma interrupção, o hardware da máquina coloca
+      algumas informações na pilha
+        - Apontador de instroções (PS)
+        - PSW
+        - Talvez mais alguns registradores
+    - CPU então vai para a entrada relativa do vetor de interrupção.
+    
+    - A partir daí, tudo vai por software:
+    
+        - Código inicial em assembly
+            - Procedimento de serviço de interrupção armazena os
+              registradores na tabela de processos (assembler)
+                - Número do processo atual e apontador na tabela de
+                  processos mantido em variáveis globais para acesso 
+                  rápido.
+                - Os dados são salvos no estado do usuário.
+            - Informação depositada pelo hardware é removida da pilha 
+              e o apontador da pilha é redirecionaro para a pilha do
+              administrador de processos (o tratador da rotina).
+            - Rotina em C é chamada para realizar o resto do trabalho.
+    
+        - Código em C
+            - Construção de uma mensagempara ser enviada ao processo
+              associado ao driver (que deve estar bloqueado esperando). 
+                - Mensagem indica interrupção para distinguí-la de
+                  mensagens do servidor de arquivos.
+                - Estado do driver alterado para pronto.
+                - Escalonador de processo é chamado
+                    - Como drivers são os processos de maior prioridade,
+                      o driver específico deveser chamado.
+                    - O driver só espera se o processo interrompido
+                      tiver a mesma prioridade: outro driver
+                - O procedimento em C chamado pelo tratador de
+                  interrupção retorna.
+                - Chama-se um código em assembly para realizar a 
+                  resposta relativa ao driver.
+
+* Inicialização do SO
+    - Inicializa todos os drivers e servidores, que chamam a rotina
+      "receive" esperando por mensagens.
+    - Começa várias shells (tty's) que esperam por um usuário logar.
+    - Quando o usuário loga, abre-se uma shell para o usuário.
+    - Um programa quase sem prioridade fica ocupando a CPU para que
+      o sistema rode sem parar, até que outros processos ajam.
