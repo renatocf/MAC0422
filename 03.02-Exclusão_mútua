@@ -1,0 +1,407 @@
+Exclusão mútua
+================
+
+* Condições de concorrência
+    - Processos rotineiramente precisam se comunicar
+    - Em muitos SOs, quando processos trabalham juntos, eles
+      compartilham algum armazenamento comum onde podem ler e escrever.
+    - Quando processos funcionam de maneira indepedente, pode ocorrer
+      um "data race", em que um processo atualiza uma região que estava
+      sendo usada pelo outro, gerando inconsistências.
+    
+    - Ex: duas threads atualizam a variavel global
+        - Situação ideal:
+            int i ← 0
+            (T1) registrador1 ← i                 ;; i = 0
+            (T1) registrador1 ← registrador1 + 1  ;; i = 0
+            (T1) i ← registrador1                 ;; i = 1
+            (T2) registrador2 ← i                 ;; i = 1
+            (T2) registrador2 ← registrador2 + 1  ;; i = 1
+            (T2) i ← registrador2                 ;; i = 2
+        
+        - Exclusão mútua:
+            int i ← 0
+            (T1) registrador1 ← i                 ;; i = 0
+            (T2) registrador2 ← i                 ;; i = 0
+            (T2) registrador2 ← registrador2 + 1  ;; i = 0
+            (T2) i ← registrador2                 ;; i = 1
+            (T1) registrador1 ← registrador1 + 1  ;; i = 0
+            (T1) i ← registrador1                 ;; i = 1
+    
+    - Ex: spooling
+        Atualização de uma área para impressão
+
+    - Resolução:
+        - REGIÃO CRÍTICA: regiões dos processos que podem gerar
+          condições de concorrência são chamadas regiões críticas.
+        
+        - 4 CONDIÇÕES PARA UMA BOA SOLUÇÃO:
+            - Só um processo deve entrar na região crítica de cada vez.
+            - Não deve ser feita nenhuma hipótese sobre a velocidade
+              relativa dos processo.
+            - Nenhum processo executando fora de sua região crítica dev
+              bloquear outro processo.
+            - Nenhum processo deve esperar um tempo arbitrariamente
+              longo para entrar na sua região crítica (adiamento
+              indefinido).
+        
+    - Solução 1: inibir interrupções
+        - Hardware possui instrução específica para inibir
+          interrupções. 
+        - SO usa quando código do kernel está processando (ele
+          precisa para que o próprio tratamento de interrupções
+          não seja afetado).
+        - Solução ruim para outros processos
+            - Loops infinitos
+            - Operações inválidas
+            - Etc.
+        - Versões antigas do Windows usavam essa técnica - e
+          acabavam travando o computador.
+        - Funciona, geralmente, quando há apenas um processador.
+        
+    - Solução 2: usar código de software
+    
+        - Tentativa 1: usar variável global
+            
+            : int A = 0; /* variável global */                :
+            :                                                 :
+            : // Processo 1          : Processo 2             :
+            : while(A == 1) {};      : while(A == 1) {};      :
+            :                        :                        :
+            : A = 1;                 : A = 1;                 :
+            : ... // região crítica  : ... // região crítica  :
+            : A = 0;                 : A = 0;                 :
+            
+            Não há garantias de exclusão mútua (que ambos não entrarão
+            na região crítica - o que pode ocorrer porque o teste não
+            tem sincronização boa).
+        
+        - Tentativa 2: revezamento
+            
+            : int vez = 1; /* variável global */                :
+            :                                                   :
+            : // Processo 1           : Processo 2              :
+            : while(1) {              : while(1) {              :
+            :                         :                         :
+            :   /* Espera */          :   /* Espera */          :
+            :   while(vez == 1) {};   :   while(vez == 2) {};   :
+            :                         :                         :
+            :   ... // região crítica :   ... // região crítica :
+            :   vez = 2;              :   vez = 1;              :
+            
+            Não há garantias de que o outro processo deixará o 
+            primeiro trabalhar. Pior ainda, se o outro programa
+            entrar em loop infinito, o primeiro processo ficará
+            congelado.
+        
+        - Tentativa 3: revezamento mais complexo
+            
+            : int p1dentro = 0;                                 :
+            : int p2dentro = 0;                                 :
+            :                                                   :
+            : // Processo 1           : Processo 2              :
+            : while(p2dentro) {};     : while(p1dentro) {};     :
+            :                         :                         :
+            : p1dentro = 1;           : p2dentro = 1;           :
+            : ... // região crítica   : ... // região crítica   :
+            : p1dentro = 0;           : p2dentro = 0;           :
+            :                         :                         :
+            : ... // resto            : ... // resto            :
+            
+            Tem a chance de que ambos entrem ao mesmo tempo.
+            
+        - Tentativa 4: gentileza
+            
+            : int p1querEntrar = 0;                             :
+            : int p2querEntrar = 0;                             :
+            :                                                   :
+            : // Processo 1           : // Processo 2           :
+            : p1querEntrar = 1;       : p2querEntrar = 1;       :
+            :                         :                         :
+            : while(p2querEntrar) {}  : while(p1querEntrar) {}  :
+            :                         :                         :
+            : ... // região crítica   : ... // região crítica   :
+            :                         :                         :
+            : p1querEntrar = 0;       : p2querEntrar = 0;       :
+            :                         :                         :
+            : ... // resto            : ... // resto            :
+            
+            Um dos processos pode acabar esperando um tempo
+            arbitrariamente longo, caso haja problemas de sincronia.
+            
+            Outra possibilidade é que ambos tentem entrar, e nenhum
+            deles entre.
+            
+        - Tentativa 5: gentileza mais complexa
+            
+            : int p1querEntrar = 0;                                 :
+            : int p2querEntrar = 0;                                 :
+            :                                                       :
+            : // Processo 1             : // Processo 2             :
+            : p1querEntrar = 1;         : p2querEntrar = 1;         :
+            :                           :                           :
+            : while(p2querEntrar)       : while(p1querEntrar)       :
+            : {                         : {                         :
+            :   if(favorito == 2)       :   if(favorito == 1)       :
+            :   {                       :   {                       :
+            :     p1querEntrar = 0;     :     p1querEntrar = 0;     :
+            :     while(favorito == 2)  :     while(favorito == 1)  :
+            :     { /* ... */ }         :     { /* ... */ }         :
+            :     p1querEntrar = 1;     :     p1querEntrar = 1;     :
+            :   }                       :   }                       :
+            : }                         : }                         :
+            :                           :                           :
+            : ... // região crítica     : ... // região crítica     :
+            :                           :                           :
+            : p1querEntrar = 0;         : p2querEntrar = 0;         :
+            :                           :                           :
+            : ... // resto              : ... // resto              :
+            :                           :                           :
+            
+           Apesar de ser quase impossível termos o problema, ainda é
+           possível que ambos entrem na região crítica.
+        
+        - Tentativa 6: Algoritmo de Dekker
+            
+            : int p1querEntrar = FALSE;                                 :
+            : int p2querEntrar = FALSE;                                 :
+            : int favorito = 1; // 1º processo é o favorito             :
+            :                                                           :
+            :                                                           :
+            : while(TRUE)                 : while(TRUE)                 :
+            : {                           : {                           :
+            :   // Processo 1             :   // Processo 2             :
+            :   p1querEntrar = TRUE;      :   p2querEntrar = TRUE;      :
+            :                             :                             :
+            :   while(p2querEntrar)       :   while(p1querEntrar)       :
+            :   {                         :   {                         :
+            :     if(favorito == 2)       :     if(favorito == 1)       :
+            :     {                       :     {                       :
+            :       p1querEntrar = FALSE; :       p2querEntrar = FALSE; :
+            :       while(favorito == 2); :       while(favorito == 1); :
+            :       p1querEntrar = TRUE;  :       p2querEntrar = TRUE;  :
+            :     }                       :     }                       :
+            :   }                         :   }                         :
+            :                             :                             :
+            :   ... // região crítica     :   ... // região crítica     :
+            :                             :                             :
+            :   p1querEntrar = 0;         :   p2querEntrar = 0;         :
+            :                             :                             :
+            :   ... // resto              :   ... // resto              :
+            : }                           : }                           :
+            
+            O algoritmo de Dekker usa a ideia de FAVORITISMO para
+            definir quando entraremos ou não em um dado processo.
+            
+            Esse algoritmo impede que os dois processos entrem ao mesmo
+            tempo na região crítica. O 'favorito' serve como uma camada
+            extra que demore tempo demais para liberar o outro.
+            
+        - Tentativa 7: Algoritmo de Peterson
+        
+            : int p1querEntrar = FALSE;                                 :
+            : int p2querEntrar = FALSE;                                 :
+            : int favorito = 1; // 1º processo é o favorito             :
+            :                                                           :
+            : while(TRUE)                 : while(TRUE)                 :
+            : {                           : {                           :
+            :   // Processo 1             :   // Processo 2             :
+            :   p1querEntrar = TRUE;      :   p2querEntrar = TRUE;      :
+            :                             :                             :
+            :   favorito = 2;             :   favorito = 1;             :
+            :                             :                             :
+            :   while(p2querEntrar        :   while(p1querEntrar        :
+            :      && favorito == 2);     :      && favorito == 1);     :
+            :                             :                             :
+            :   ... // região crítica     :   ... // região crítica     :
+            :                             :                             :
+            :   p1querEntrar = TRUE;      :   p2querEntrar = TRUE;      :
+            :                             :                             :
+            :   ... // resto              :   ... // resto              :
+            : }                           : }                           :
+            
+            Essa solução é um pouco mais concisa, que faz o mesmo que o
+            algoritmo de Dekker.
+        
+    - Solução 3: Exclusão mútua por Hardware (instrução Test_and_set)
+        
+        - Instrução especial do hardware, atômica
+        - Test_and_set(a,b) → { a = b; b = TRUE; }
+        
+        :                                                           :
+        : while(TRUE)                 : while(TRUE)                 :
+        : {                           : {                           :
+        :   int p1_nao_pode_entrar    :   int p2_nao_pode_entrar    :
+        :       = TRUE;               :     = TRUE;                 :
+        :                             :                             :
+        :   while(p1_nao_pode_entrar) :   while(p2_nao_pode_entrar) :
+        :   {                         :   {                         :
+        :     test_and_set(           :      test_and_set(          :
+        :       p1_nao_pode_entrar,   :        p2_nao_pode_entrar,  :
+        :       ativo);               :        ativo);              :
+        :   }                         :   }                         :
+        :                             :                             :
+        :   ... // região crítica     :   ... // região crítica     :
+        :                             :                             :
+        :   p1querEntrar = TRUE;      :   p2querEntrar = TRUE;      :
+        :                             :                             :
+        :   ... // resto              :   ... // resto              :
+        : }                           : }                           :
+        
+        A instrução test_and_set é atômica e evita o problema da
+        tentativa de solução 1: lá, poderia haver uma interrupção
+        da execução entre o teste e o assinalamento. Porém, esse
+        tipo de uso depende de uma instrução do HARDWARE.
+        
+        Esse comportamenteo pode ser simulado em software se
+        transformarmos a função test_and_set como uma função que é
+        uma região crítica - e usando o algoritmo de Dekker ou de 
+        Peterson.
+
+    - Solução 4: Exclusão mútua por Semáforos (SO/compiladores)
+        
+        - Novo tipo de variável
+        - 2 ações atômicas:
+            - P(semáforo)/down(semáforo)
+                - Se valor > 0 subtrai 1 e continua
+                - Senão trava e espera mudar de fila
+            - V(semáforo)/up(semáforo)
+                - Se semáforo tem fila, libera o primeiro
+                - Senão incrementa valor em 1
+            
+            - Variação: semáforo binário
+                - Valor nunca excede 1
+        
+        - Facilita implementação de exclusão mútua em vários
+          processos.
+
+        - Pode ser oferecido no SO ou pelo compilador (ex: Java)
+            - Em compiladores é implementado usando outro esquema
+              disponível de exclusão mútua.
+
+        - Código para semáforo binário
+            
+            Semaforo mutex = 1;
+            while(TRUE)
+            {
+                P(mutex);
+                // região crítica
+                V(mutex);
+                // região não crítica
+            }
+        
+        - Ex: problemas com progutores e consumidores.
+        
+            Semaforo_binario mutex; /* exclusão mútua */
+            Semaforo_contador vazio = TAMBUFFER; /* Controle buffer */
+            Semaforo_contador cheio = 0;         /* Controle buffer */
+            
+            // PRODUTOR
+            while(TRUE)
+            {
+                registro item_produzido;
+                produz(&item_produzido);
+                P(vazio); /* Vê se há algum slot vazio */
+                P(mutex); /* Pega acesso ao buffer de itens */
+                coloca_item(item_produzido);
+                V(mutex); /* Deixa acesso do buffer de itens */
+                V(cheio); /* Aumenta o nº de recursos cheios */
+            }
+            
+            // CONSUMIDOR
+            while(TRUE)
+            {
+                registro item_consumido;
+                P(cheio); /* nº de recursos disponíveis */
+                P(mutex); /* Pega acesso ao buffer de itens */
+                pega_item(&item_consumido);
+                V(mutex); /* Deixa acesso do buffer de itens */
+                V(vazio); /* Aumenta a quantidade de slots vazios */
+            }
+            
+            
+                                                    MUTEX VAZIO CHEIO
+                                   ||                 0     3     0
+             0 1 2                 || Fila de  PRO1   1     2     1
+            | | | |                || Execução PRO1   1     1     2
+             ^                     ||          PRO2   1     0     3
+             '- ini = 0; prox = 0; ||          PRO2   1   interrupção
+                                   ||          CON1   1     1     2
+                                   ||               PRO1^   0     3
+            VAZIO  CHEIO  MUTEX    ||          PRO1   1   interrupção
+                                   ||          CON2   1     1     2
+                                   ||               PRO1^   0     3
+                                   ||          CON1   1     1     2
+                                   ||          CON1   1     2     1
+                                   ||          CON2   1     3     0
+                                   \/          PRO2   1     2     1
+        
+    - Solução 5: Monitores (compilador)
+        - Os semáforos são uma forma interessante de fazer o controle de
+          acesso para a exclusão mútua. Porém, ele ainda depende de que
+          os programadores usem os semáforos corretamente.
+        - Dentro da lógica de POO, o monitor funciona como um objeto.
+        - Implementado pelo compilador.
+        - Somente 1 processo "entra" no monitor de cada vez
+            - Controle de entrada por técnicas de exclusão mútua
+        - Processo pode emitir um WAIT
+            - "sai" do monitor e entra em uma fila associada à variável
+              da operação WAIT.
+            - Reativado pela operação SIGNAL.
+        - Processo pode emitir SIGNALlogo antes de sair do monitor
+            - Quem estiver esperando na fila entra em seguida (se
+              houver).
+        
+        - Ex: estilo C, originalmente em ADA
+            
+            Monitor ProdutorConsumidor{
+              condition full, empty;
+              int count;
+              procedure coloca_item(item) {
+                if(count == TAMBUFFER) { WAIT(full) } 
+                /* Espera buffer ter espaço */
+                
+                entra_item(item); /* Altera buffer comum */
+                count++;
+                if(count == 1) { SIGNAL(empty) } 
+                /* avisa que tem dado */
+              }
+              
+              procedure pega_item(&item) {
+                if(count == 0) { WAIT(empty); }
+                /* Espera buffer ter espaço */
+                
+                tira_item(item); /* Altera buffer comum */
+                count--;
+                if(count == TAMMBUFFER-1) { SIGNAL(full); }
+                /* Avisa que buffer não está mais cheio */
+              }
+            }
+            
+            /* Produtor */
+            while(TRUE) {
+              registro item_produzido;
+              produz(&item_produzido);
+              coloca_item(item_produzido);
+            }
+            
+            /* Consumidor */
+            while(TRUE) {
+              registro item_consumido;
+              pega_item(&item_consumido);
+              consome(item_consumido);
+            }
+            
+            Cada uma das variáveis de acesso pode ser implementada
+            usando um semáforo.
+            
+            É necessário termos um MUTEX (semáforo binário) para que 
+            entremos no monitor.
+            
+            O SIGNAL funciona igual a um V(), porque ele libera alguém
+            de uma fila para entrar.
+            
+            O WAIT, porém, é mais complexo. Precisamos, primeiro, dar
+            um V() para liberar o MUTEX para outro processo entrar.
+            Depois, damos dois P's: um para conseguir entrar na fila 
+            de aguardo do recurso e outro para acessar o mutex (depois).
