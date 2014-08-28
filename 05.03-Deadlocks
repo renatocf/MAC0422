@@ -1,0 +1,59 @@
+Deadlocks
+===========
+
+* Competiçãopor recursos (ex, dispositivos, arquivos, plotters, canais
+  de comunicação, etc).
+* Ocorre quando tempos regiões críticas - que não podem ser
+  compartilhados e só um processo pode usá-lo por vez.
+* Os deadlocks são um IMPASSE que ocorre nesse sistema - quando um
+  processo P1 precida de dois recursos, R1 e R2, e o processo P2
+  precisa dos mesmos recursos. Se P1 pegar R1, e P2 pegar R2, eles
+  entram num IMPASSE. Nem P1 terminará, liberando R1 para P2 terminar,
+  nem P2 terminará, liberando R2 para P1 terminar.
+* Ex:
+          P1     } O uso de recursos pode ser modelado usando um
+        ↗   ↘    } grafo de recursos, com vértices sendo recursos
+      R1     R2  } e processos, e arcos ligando processo + recurso.
+        ↖   ↙    } Se houver ciclos nesse grafo, então há deadlock,
+          P2     } e ele precisa ser tratado.
+
+* Existem 4 condições NECESSÁRIAS para que os impasses ocorram 
+  (Coffmann et al, 1971):
+    - Exclusão mútua: cada recurso pode apenas ser designado a um
+      processo.
+    - Espera e segura: processo que requisitaram recursos previamente
+      podem requisitar novos.
+    - Não preempção: recursos previamente designados a processo não
+      podem ser retirados. Os processoprecisam liberá-los
+      explicitamente.
+    - Espera circular: deve existir um conjunto de 2 ou mais processos
+      que podem ser organizados em uma lista circular, onde cadaprocesso
+      está esperando um recurso do processo anterior.
+
+* Métodos de solução:
+    - Ignorar o problema (método avestruz)
+        - Se acontecer, o sistema pode ser reiniciado
+    - Detecção
+        - Mantém o grafo de recursos. Toda vez que um recurso for
+          criado, é necessário checar o grafo e matar um dos 
+          processos que o querem.
+    - Prevenção
+        - Ataca uma das condições necessárias (Havender)
+        - Espera e segura (wait for) - programa requisita todos os 
+          recursos de uma só vez
+            - Desperdício de recursos
+            - Variação: dividir programa em vários passos, com 
+              alocação de recursos por passos.
+            - Espera indefinida: recursos não disponíveis ao mesmo 
+              tempo.
+        - Não preempção - se não consegue um recurso libera todos
+            - Adiamento indefinido
+            - Mais difícil de detectar
+        - Espera circular - numerar os recursos e alocar sempre 
+          em ordem
+            - Numeração significa que se novos recursos sãoadicionados
+              programas podem terque ser reescritos.
+            - Se numeração não reflete ordem de uso dos recursos,
+              temos desperdício.
+            - Aplicativos têm que se preocupar com restrição arbitrária
+              e dependente da instalação.
