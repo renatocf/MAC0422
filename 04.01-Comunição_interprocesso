@@ -1,0 +1,60 @@
+Comunicação entre processos
+=============================
+
+* Semáforos, monitores
+    - Para memória compartilhada
+* Envio de mensagens
+    - send(destino, mensagem);
+    - receive(fonte, &mensagem); /* fonte pode ser Pid ou ANY */
+
+* Questões
+    - Comunicação síncrona ou assíncrona?
+        - Síncrona: como uma chamada de telefone. Quando um envia a
+          mensagem, o outro já recebe.
+        - Assíncrona: como uma carta. Quando um envia a mensagem, o
+          outro pode receber depois de algum tempo.
+    - Confirmação
+        - Mensagem de confirmação para certificação de entrega.
+        - Retransmissão se certificação for muito demorada.
+        - Mensagens fuplicadas devem ser ignoradas (contar mensagens).
+          Isso é necessário porque, se uma mensagem demorar muito,
+          ela pode ser reenviada. Porém, no final, ambas podem chegar.
+    - Endereçamento
+        - Serve para identificar se há comunicação entre máquinas.
+        - processo@maquina, processo@maquina.dominio
+    - Autenticação: criptografia
+    - Eficiência quando na mesma máquina.
+    - Mailbox (pode compartilhar) x bloqueio total (MINIX)
+        - Mailbox: continua agindo e só bloqueia quando receber uma
+          mensagem de volta. Porém, para isso, é necessário haver um
+          pool que guarde as mensagens recebidas. Isso é ruim para um
+          SO, pois gasta memória do sistema, e seria sucetível a um
+          ataque DDoS (se fossem geradas várias mensagens
+          constantemente).
+        - Minix: quando é enviada uma mensagem, o programa é bloqueado
+          até que ela seja recebida. Isso evita o problema de
+          armazená-las. A tabela de processo precisa, apenas, armazenar
+          um campo que diga que ele está bloqueado enviando uma
+          mensagem.
+
+* Chamada de procedimento remota
+    - Para cliente, envio de mensagem parece chamada de procedimento
+    - Sempre síncrono.
+                
+            Client CPU
+                
+            Client
+            .----.------.
+            |    | Stub |
+            '----'------'
+
+    - Problemas:
+        - Passagem de parâmetros por referência não é possível, pois a
+          memória entre cliente e servidor pode não ser compartilhada.
+        - Representação diferente de informações:
+            - Pode variar dependendo do hardware (esses problemas
+              diminuíram recentemente)
+            - Ponto flutuante, inteiros, ASCII.
+        - Comportamento em caso de falha:
+            - Alternativas: tentar de novo? Matar processo? (quando?)
+            - At least once, at most once, maybe.

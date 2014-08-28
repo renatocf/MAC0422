@@ -1,0 +1,202 @@
+Escalonamento de processos
+============================
+
+* Quando se tem vários processos é necessária uma política para escolher
+  o próximo processo a ter o controle da CPU.
+* Ganho muita força com a criação dos primeiros sistemas de janelas
+  (Machintosh e Windows)
+
+* Objetivos
+    - Justiça: todos rodam.
+    - Eficiência: CPU utilizada 100% do tempo pelos processos.
+    - Tempo de resposta: usuários interativos não devem notar latência.
+    - Fluxo: maximizar o número de processos que completam (BATCH).
+    - Minimizar tmpo para processos batch completarem.
+
+* Alguns os objeticos são contraditórios:
+    - Fluxo x eficiência
+    - Fluxo x tempo de resposta
+
+* Problema: processos imprevisíveis.
+    - Não podemos saber quanto tempo algum deles rodará.
+
+* Praticamente todos os SOs têm interrupção periódica por relógio.
+    - Todas as vezes que o relógio dá um tick, ocorre uma interrupção.
+      O processamento é parado, empilhando PSW e PC e saltando para
+      o código que dará o controle para o escalonador de processos. 
+      Isso evita que um usuário tenha controle do sistema o tempo todo.
+    - NOTA: MS Windoes por muito tempo não utilizou este mecanismo
+      (multiprocessamento cooperativo).
+        - Ponto positivo: não precisa de hardware.
+        - Ponto negativo: o compilador introduzia chamadas de sistema
+          que fazia mensagens para chamar o escalonador.
+
+* Alto nível
+    - Job scheduling - quais tarefas concorrem pelos recursos do 
+      sistema (BATCH).
+    - Serve para processamentos enormes, em que os BATCHes rodam 
+      durante um tempo, com o gerenciamento feito por um operador 
+      ou algum algorítmo maior do sistema.
+
+* Nível intermediário
+    - Quais processos podem concorrer pela CPU.
+    - suspende | ativa processos para controlar carga do sistema.
+    - Suspende, por exemplo, processos que já rodavam há muito tempo.
+
+* Baixo nível
+    - Qual dos processos que estão prontos deve ter o controle da CPU
+
+* Preemptivo | Não preemptivo
+    - CPU pode : não pode ser retirada de um processo
+    - Preempção ocorre ao custo de um overhead
+        - No mínimo o estado do processo deve ser salvo.
+        - Uma nova rotina precisará ser rodada.
+    - Preempção é necessária em sistemas onde tempo de resposta é
+      importante (tempo real | sistemas interativos multiusuários)
+                  ^^^^^^^^^^- Precisam ter tempo de resposta preditível
+    - A interrupção também pode ser feita quando algum hardware age -
+      como uma leitura pronta de HD ou memória, entrada no teclado, etc.
+
+* Interrupção de relógio
+    - Instrução de hardware determinam tempo até que a próxima
+      interrupção seja gerada pelo relógio do sistema.
+
+* Algoritmos de escalonamento
+    
+    - Data limite
+        - Tempo real
+        - Processo ao iniciar, determina quando sua tarefa precisa estar
+          completa.
+        - Planejamento complexo: envolve cuidadosa estimação de uso dos
+          recursosdo sistema (disco, CPU, etc.)
+        - Sobrecarga de planejamento (sistemas em tempo real consomem
+          CPU apenas para serem sistemas em tempo real).
+    
+    - FIFO
+        - Mais básico.
+        - Razoável apenas em sistemas BATCH.
+    
+    - Shortest Job First (Batch)
+        - Estimativa de tempo por processo (cada processo dá a sua
+          própria estimativa - se exceder, ou o processo é morto, ou
+          o custo pode aumentar).
+        - Objetivo é aumentar fluxo de processos.
+        - Pode ser ruim porque processos pequenos podem ficar rodando
+          durante muito tempo, e os grandes (e mais caros) são maiores.
+    
+    - Shortest Remaining Time First (Batch)
+        - Espeialização do anterior, mas melhora a justiça.
+        - Um processo que falta apenas 1 min para ser concluído, mas
+          durava 3 dias, não é interrompido para a execução de vários
+          processos de uma hora.
+    
+    - Prioridade
+        - Número estavelece ordenação nos processos
+        - Estática vs Dinâmica
+          ^^^^^^^^    ^^^^^^^^-- Pode mudar durante a execução
+             |                   do processo (enquanto roda)
+             '-- Não pode ter alteração
+        - A prioridade pode ter custos diferentes
+        - Highest response ratio (forma de implementação)
+            Prioridade = (tempo espera + tempo serviço) / tempo serviço
+    
+    - Round-robin
+        - Fila circular
+        - Revezamento estrito
+        
+                Ready queue
+            
+                 .> P9 -> P7 -> P3 -> P1 -|-> | P0 |
+                 |                        |     |
+                 |  ^---------------------'     |
+                 |          preempted           |
+                 |                              |
+                 | ready                        |
+                 |                              |
+                P2 P4 P5 P6 P8    <-------------'
+                                  Blocked on I/O
+                I/O Queue
+    
+    - Multi-level queues
+        - 1 fila por classe de prioridade
+        - Prioridade estática (fica sempre na mesma fila)
+        - Round-robin em cada fila
+            
+            Maior prioridade
+                    ^
+          real time | --> P -> P -> P -> P -|-> | P | (Running)
+                    |     ^-----------------'    
+                    |          preempted         
+                    |                            
+             system | --> P -> P -> P -> P -|-> |   |
+                    |     ^-----------------'    
+                    |          preempted         
+                    |                            
+        interactive | --> P -> P -> P -> P -|-> |   |
+                    |     ^-----------------'    
+                    |          preempted         
+                    |                            
+              batch | --> P -> P -> P -> P -|-> |   |
+                    |     ^-----------------'    
+                    |          preempted          
+                       ready                       
+    
+    - Multi-level FEEDBACK queues
+        - Interrupção de temporeduz prioridade
+        - Promoção: tempo sem rodar, interrupção I/O
+        - Prioridade dinâmica - de acordo com o comportamento
+          do processo, a prioridade é mudada - se houver interrupção
+          por I/O, o processo AUMENTA de prioridade (e diminui o
+          quantum de uso do processaor). Se houver interrupção por
+          relógio, o processo DIMINUI de prioridade (aumentando
+          o quantum de uso do processador). No primeiro caso, o 
+          tempo de CPU costuma ser menor, e no segundo, maior. 
+          Essa é uma forma de heurística.
+        
+          Maior prioridade
+             ^                                            |
+           0 | --> P -> P -> P -> P -|-> | P | (Running)  |
+             | .---------------------'                    |
+             | |      preempted                           |
+             | |                                          |
+           1 | '-> P -> P -> P -> P -|-> |   |            |
+             | .---------------------'                    |
+             | |      preempted                           |
+             | |                                          |
+           2 | '-> P -> P -> P -> P -|-> |   |            |
+             |     ^-----------------'                    ^
+             |        preempted                     Maior quantum
+                                                     
+    - Escalonamento garantido
+        - Tenta dar acada USUÁRIO uma fatia igual detempo
+        - Tempo do usuárioreal: tempo desde login / n
+        - Escolhe processo de usuário com fatia real mais distante do
+          real (ou seja, dá prioridade para o usuário que usou uma
+          pequena fatia de tempo em comparação com outros usuários).
+        - Pode ser usado para GRUPO de usuários
+            - VM da IBM usava para sistemas operacionais
+        - Vantagens
+            - Justo com usuários/grupos de usuários
+            - Favorece usuários com poucos processos
+        - Desvantagens
+            - Injunsto com processos
+            - Favorece usuários com poucos processos
+            - Pode dar fatia a um usuário que não vai precisar
+            - Overhead (mais tempo para guardar estatísticas de usuário 
+              + percorrer a tabela de usuários)
+    
+    - Sistemas multiprocessados
+        - Diferente de multiprogramação (que tinha múltiplos programas
+          na mesma CPU).
+        - Agora, temos também múltiplas CPUs, múltiplos cores e
+          processadores em hyper-threading (que extrai e decodifica 
+          instruções (do ciclo fetch-decode-execute) duas instruções
+          ao mesmo tempo. A execução, porém, continua em um só).
+          Atualmente, há computadores com múltiplas CPUs com vários
+          cores com hiper-threading.
+        - Porém, os mesmos algoritmos e aplicam:
+            - Assume-se SMP (simetrical multi processing)
+            - Todos têm acesso à memória e aos mesmos recursos.
+            - Cada processo vê como se houvesse apenas uma linha.
+            - O Kernel tem mais interrupções (das várias CPUs/cores),
+              mandando os processos para uma delas conforme o caso. 

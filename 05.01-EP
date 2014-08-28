@@ -1,0 +1,51 @@
+
+ .--------------------------------------------------------------.
+ | User process | User process | User process |      ...        | } User
+ |--------------'--.-----------'-.------------'.----------------| }
+ | Process manager | File system | Info server | Network server | } space
+.++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.
++|-------------.---'--------.----'------------.'----------------|+}
++| Disk driver | TTY driver | Ethernet driver |       ...       |+} Kernel
++|-------------'------------'.----------------'.----------------|+} 
++|           Kernel          |   System task   |   Clock task   |+} space
++'--------------------------------------------------------------'+}
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+                Interrupções assíncronas/Escalonamento
+
+Até a versão 2 do Minix, os drivers e o microkernel estavam, ambos,
+dentro do mesmo espaço de memória. Para a época, em que os computadores
+tinham pouco espaço e precisavam de mais velocidade, isso trazia
+eficiência.
+
+ .--------------------------------------------------------------.
+ | User process | User process | User process |      ...        | } 
+ |--------------'--.-----------'-.------------'.----------------| } User
+ | Process manager | File system | Info server | Network server | } space
+ |-------------.---'--------.----'------------.'----------------| }
+ | Disk driver | TTY driver | Ethernet driver |       ...       | } 
+.++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.
++|-------------'------------'.----------------'.----------------|+} Kernel
++|           Kernel          |   System task   |   Clock task   |+} space
++'--------------------------------------------------------------'+}
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+    Interrupções assíncronas    Escalonamento
+
+A partir da versão 3 do Minix, com computadores mais poderosos, os
+drivers foram separados e colocados em espaço de memória, como processos
+independentes. O System task e o Clock task funcionam como drivers
+também, mas não puderam ser separados, independentemente, do espaço de
+memória do Kernel.
+
+No EP, será necessário fazer duas modificações:
+1) Interrupção do teclado no Kernel - adicionar um 'printf' que 
+   imprimirá informações da fila de prioridade do Kernel (visĩvel 
+   pelo process manager).
+2) Implementação de rotina de biblioteca - adicionar uma chamada de
+   sistema que enviará mensagens para o 'process manager', mandando
+   que se atualize a tabela de processos.
+   
+   A função deve ser enviada com 'send' e, logo em seguida, esperar
+   a resposta com 'receive'.
+   
+   O funcionamento do 'fork' é um bom exemplo de como se comunicar 
+   com o 'process manager' (e este, com o 'system task').
