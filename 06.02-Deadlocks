@@ -1,0 +1,88 @@
+Deadlocks (impasse)
+=====================
+
+* 4 condições para que impasses ocorram:
+    - Exclusão mútua, espera e segura, não preempção e espera circular.
+* Corresponde a um grafo de usos de recurso.
+
+* Métodos para evitá-los
+    - Ignorar o problema: algoritmo do avestruz
+        - Avalia-se que o custo de tratar o problema é muito alto.
+        - Se usuário tiver problema, apenas mata o processo
+        - Abordagem Unix
+    
+    - Proteção e recuperação
+        - Mantém o grafo de processos e realiza a busca de ciclos
+        - Pode ser efetivo, porque não há tantos recursos preemptivos
+    
+    - Prevenção (evita uma das 4 condções).
+        - Espera e segura (wait for): programa requisita todos os
+          recursos de um vez
+            - Desperdício de recursos.
+            - Variação: dividir programa em vários passos, com alocação
+              de recursos por passos.
+            - Espera indefinida: recursos não disponíveis ao mesmo
+              tempo.
+            - Exemplo: impressora com spooling
+        - Não preempção: se nãoconsegue um recurso, livera todos
+            - Adiamento indefinido (pode ocorrer)
+            - Mais difícil de detectar
+        - Espera circular: numerar os recursos e alocar sempre em ordem
+            - Numeração significa que se novos recursos são adicionados,
+              programas podem ter que ser reescritos.
+            - Se a numeração não reflete a ordem de uso dos recursos,
+              temo desperdício.
+
+    - Evitar impasses (avoidance)
+        - Algoritmo do Banqueiro (Dijkstra)
+            - Metáfora de "empréstimos" e "pagamentos".
+            - Usado em recursos do mesmo tipo (estensível a vários
+              recursos).
+            - O objetivo do algoritmo é que encontremos ALGUMA maneira
+              de os processos terminarem de rodar (geralmente, "dando"
+              o recurso para o processo que fez a requisição - para 
+              fazemos o teste - e então vemos se seria possível, ou
+              não, acabar o processamento).
+            - Cada processo devedeclarar uso máximo de recursos.
+            - 3 números associados a cada processo: empréstimos, máximo,
+              diferença.
+            - Pelo algoritmo, recurso é concedido se o estado resultante
+              é "seguro", ou seja, todos os processos eventualmente têm
+              suas necessidades máximas de recursos atendidas.
+                - Máximo de cada processo <= máximo do sistema
+                - Supõe-se que todos os processos conseguem terminar se
+                  conseguirem o máximo de recursos
+                - Deve existir recursos disponiveis para algum dos
+                  processos conseguir sua quantidade máxima.
+                - Liberação dos recursos deste último processo deve
+                  liberar recursos para outro processo ter sua alocação
+                  máxima, e assim sucessivamente até que todos terminem.
+        - Algoritmo do Banqueiro para vários recursos
+            - Substituímos uma matriz por 2:
+                - 1 linha por processo
+                - 1 coluna por recurso
+                - Recursos máximos (N)
+                - Recursos alocados ao processo (A)
+            - E um vetor: recursos disponíveis (D)
+            - Ex:
+                      .----------------------------------.
+                      | Allocation |   Need   | Avaiable |
+                      |  q1 q2 q3  | q1 q2 q3 | q1 q2 q3 |
+                 .----|============|==========|==========|
+                 | p1 |   0  3  1  |  7  2  2 |  3  1  3 |
+                 | p2 |   2  0  0  |  1  2  2 |          |
+                 | p3 |   1  0  0  |  8  0  2 |          |
+                 | p4 |   2  1  1  |  0  1  1 |          |
+                 | p5 |   2  0  2  |  2  3  1 |          |
+                 '----'------------'----------'----------'
+                
+                  3 1 3 →  P4 pode terminar: libera 2 1 1
+                  5 2 4 →  P2 pode terminar: libera 2 0 0
+                  7 2 4 →  P1 pode terminar: libera 0 3 1
+                  7 5 5 →  P5 pode terminar: libera 2 0 2
+                  9 5 7 →  P3 pode terminar: libera 1 0 0
+                 10 5 7 →  Sem mais processos: ESTADO SEGURO
+            
+            - O método GARANTE que, se precisarem de o máximo de
+              recursos - no pior caso - todos PODEM acabar (existe
+              uma maneira).

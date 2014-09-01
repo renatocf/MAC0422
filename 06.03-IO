@@ -1,0 +1,47 @@
+Entrada e Saída (IO)
+======================
+
+* Dispositivos
+    - De bloco:
+        - Informação em blocos de tamanho fixo (128b -> 4K).
+        - Cada bloco com número sequencial.
+        - Blocos podem ser acessados independentemente (acesso
+          aleatório).
+        - Discos, USB, disketes, CD, DVD.
+    
+    - De carater:
+        - Indormação na forma de sequência de caracteres.
+        - Leitura/escrita sequencial, sem retorno (stream).
+        - Terminais antigos, teclado, mouse, interface de rede,
+          sensores.
+        - Tem a ideia de FLUXO: uma vez retirada a próxima leitura,
+          não teremos volta. Elas não podem ser mudadas.
+
+* Organização
+    - Dispositivos
+    - Controladores
+    - Software dependente de dispositivo (acessado pelo compilador C)
+    
+    - Sistema operacional lida com controlador
+        
+        Dispositivo     Dispositivo : Componentes mecânicos
+                  \     /           : 
+                   \   /            : 
+                Controlador         : Placa eletrônica
+                     |              : (conversão analógico/digital)
+                     |              : 
+            Sistema operacional     : Software
+    
+    - Cada controlador tem alguns registradores que são endereçados
+      pela CPU e acessados diretamente.
+    - Uma possibilidade é usar espaço de endereçamente especial para
+      I/O, sendo que cad controlador é designado para um intervalo.
+    - SO executa entrada e saída "escrevendo" comandos nos registradores
+      dos controladores.
+    - Quando um comando é aceito, a CPU é usada para outro processo.
+    - Quando uma requisição é realizada, o controlador gera um sinal
+      eletrônico que causa uma interrupção.
+    - Sistema consulta vetor de interrupção para localizar rotina
+      de tratamento.
+    - CPU faz a transferência da informação do buffer do controlador
+      para a memória.

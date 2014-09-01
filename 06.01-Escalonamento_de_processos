@@ -1,0 +1,45 @@
+Escalonamento de processos
+============================
+
+* Alto nível
+    - Job scheduling - quais tarefas cncorrem pelos recursos do sistema
+      (BATCH).
+* Nível intermediário
+    - Quais processos podem concorrer pela CPU.
+    - suspende | ativa processos para controlar arga do sistema.
+* Baixo nível
+    - Qual dos processos que estão prontos deve ter o controle da CPU.
+
+* Algoritmos de escalonamento
+    - Data limite (tempo real, com planejamento complexo)
+    - FIFO (mais básico, para sistemas batch)
+    - Shortest Job First (para batch, como heurísitica)
+    - Shortest Remaining Time First (para batch, melhor heurística)
+    - Roud robin (fila circular)
+    - Multi-levl queues (1 fila por classe de prioridade, com
+      round robin em cada)
+    - Milti-level FEEDBACK queue (filas de prioridade flexíveis, com
+      mudanças dependendo de tempo sem rodar e interrupções I/O)
+    - Escalonamento garantido (sistemas com vários usuários, tenta dar
+      uma fatia igual para cada usuário com (tempo desde login / n))
+
+* Sistemas multiprocessados
+    - Sistemas com várias CPUs, múltiplos cores e hiper-threading.
+    - Mesmo algoritmos se aplicam, com uma combinação mais complexa
+      de recursos. Deve-se tomar cuidado com o compartilhamento de 
+      memória.
+    - Afinidade de processos
+        - Hard affinity: sistema farante que processo roda no mesmo
+          processador.
+        - Soft affinity: sistema tenta na mesma CPU mas pode mudar
+          processo para outra CPU.
+            - Melhor que CPU sem nada a fazer
+            - Sistema tenta balanceamento de cargas nas CPUs de maneira
+              que cada um tenha processos suficientes.
+            - Push-migration: SO verifica periodicamente carga em cada
+              processador (número de processos na fila) - muda se houver
+              desbalanceamento.
+            - Pull-migration: escalonador verifica se sua fila. Se 
+              estiver vazia, procura na fila de outros processadores 
+              e "rouba" processos (cada um tem um escalonador).
+            - O Linux combina pull e push.
