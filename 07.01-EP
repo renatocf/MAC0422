@@ -1,0 +1,12 @@
+Filas de prioridade do Minix
+==============================
+
+15 IDEL_Q -> idle (processo que não faz nada)
+
+07 USER_Q -> init
+
+04        -> fs
+03        -> rs     -> pm
+02        -> disk   -> lof   -> mem
+01        -> tty
+00 TASK_Q -> system -> clock

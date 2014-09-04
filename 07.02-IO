@@ -1,0 +1,340 @@
+Entrada e saída
+=================
+
+* Dispositivos
+    - De bloco:
+        - Informação em blocos de tamanho fixo (128b -> 4K).
+        - Cada bloco com número sequencial.
+        - Blocos podem ser acessados independentemente (acesso
+          aleatório).
+        - Discos, USB, disketes, CD, DVD.
+    
+    - De carater:
+        - Indormação na forma de sequência de caracteres.
+        - Leitura/escrita sequencial, sem retorno (stream).
+        - Terminais antigos, teclado, mouse, interface de rede,
+          sensores.
+        - Tem a ideia de FLUXO: uma vez retirada a próxima leitura,
+          não teremos volta. Elas não podem ser mudadas.
+
+* Organização
+    - Dispositivos
+    - Controladores
+    - Software dependente de dispositivo (acessado pelo compilador C)
+    
+    - Sistema operacional lida com controlador
+        
+        Dispositivo     Dispositivo : Componentes mecânicos
+                  \     /           : 
+                   \   /            : 
+                Controlador         : Placa eletrônica
+                     |              : (conversão analógico/digital)
+                     |              : 
+            Sistema operacional     : Software
+    
+    - Cada controlador tem alguns registradores que são endereçados
+      pela CPU e acessados diretamente.
+    - Uma possibilidade é usar espaço de endereçamente especial para
+      I/O, sendo que cada controlador é designado para um intervalo.
+    - SO executa entrada e saída "escrevendo" comandos nos registradores
+      dos controladores.
+    - Quando um comando é aceito, a CPU é usada para outro processo.
+    - Quando uma requisição é realizada, o controlador gera um sinal
+      eletrônico que causa uma interrupção.
+    - Sistema consulta vetor de interrupção para localizar rotina
+      de tratamento.
+    - CPU faz a transferência da informação do buffer do controlador
+      para a memória.
+
+* Direct Memory Access
+    - Antigamente, a CPU controlava a escrita do controlador para a
+      memória. Como isso desperdiçava capacidade de processamento,
+      foi criado um controlador especial (em hardware) chamado DMA.
+      O DMA tem buffers e recebe/trata as interrupções dos controladores
+      de IO. Assim, a CPU continua processando, e o DMA usa o barramento
+      da CPU para isso. Como a CPU não poderá acessar a memória DURANTE
+      a cópia do buffer do DMA para ela, ele usa os registradores +
+      cache para seu processamento.
+    
+    - Informação é tranferida do dispositivo para a memória sem
+      intervenção da CPU.
+    - Interrupção gerada após final da transferência.
+    - Durante transferência, CPU utilizada para outros processos.
+    - CPU fornece local do buffer e tamanho da transferência além do
+      número do setor do disco.
+    - Controlador tem buffer local, pois transferência do dispositivo
+      pode ser interrompida.
+
+* Interleaving
+    - Todos os discos têm vários pratos, cada um separado em setores
+      com várias trilhas magnéticas. Um SETOR tem o tamanho do buffer
+      do controlador de disco/DMA.
+    - Ler várias trilhas consecutivas é apenas uma OTIMIZAÇÃO que 
+      aumentaria a velocidade. Porém, quando termina de ler um setor,
+      o buffer está completo, e demora um tempo para passar do buffer
+      do controlador do disco para o DMA.
+    - Uma otimização é fazer o setor 1 não ir para o setor 2
+      diretamente. Considerando a velocidade de rotação do disco e a
+      taxa de transferência do barramento, coloca-se o setor 2 três
+      setores depois (por exemplo), pois num mesmo giro da cabeça
+      de leitura, já seria possível ler a mesma trilha.
+    - Se a leitura for de trilhas diferentes, essa otimização não ajuda.
+
+* Software para IO: Objetivos
+    - Objetivos
+        - Independência do tipo de dispositivo:
+            - "sort < input > output" deveria funcionar sempre
+        - 
+        - Uniformidade da detecção de erros
+        - Tratamento síncrono/assíncrono
+    
+    - Quatro camadas
+        1. Processamento de interrupção
+        2. Drivers de dispositivo
+        3. Software de I/O independente de dispositivo (interface)
+        4. Software de usuário (funções em C)
+
+* Processamento de interruções
+    - Eliminam a ilusão de multiprocessamento
+    - Objetivo: esconder interrupões o mais internamente possível do
+      sistema (está dentro do microkernel, no Minix)
+    - Em minix, processos são cloqueados quando comando de I/O emitido e
+      interrupção é esperada (mesmo drivers)
+    - Quando interrupção ocorre o processador de interrupção faz o
+      necessário para desbloquear processo.
+        - V() em semáforo, envio de mensagem em Minix, etc.
+
+* Drivers de dispositivo
+    - Um para cada tipo de dispositivo (ou classe de dispositivos
+      semelhantes, ex. SATA)
+    - Envarregado de traduzir comandos emitidos pelo software
+      independente de dispositivo para particularidades do controlador.
+        - Início e fim de buffer, tamanho da transferência, etc.
+    - Encapsula conhecimentos sobre:
+        - Número e dunção dos registradores de um controlador
+        - Particularidades na organização do dispositivo
+            - Linear, cilindos + trilhas + setores;
+            - Cabeças de leitura;
+            - Movimento do braço do disco;
+            - Fatores de interleaving;
+            - Atrasos mecânicos.
+    
+    - Ex: disquete
+        1. Bloco N é requisitado.
+        2. Se driver está livre, pedido é aceito, senão requisição é
+           colocada em fila de espera.
+        
+        3. Requisição é traduzida em termos concretos:
+            3.1. Verificar onde estão os setores correspondentes ao 
+                 bloco pedido.
+            3.2. Onde está o braçodo disco.
+            3.3. Se motor do braço está funcionando.
+            3.4. Se disquete está girando.
+        
+        4. Decide comandos a serem emitidos (iniciar rotação, mover
+           braço, etc.)
+        
+        5. Emite comandos, escrecendo nos registradores do controlador
+           (um de cada vez ou lista ligada, dependendo do controlador)
+        
+        6. Driver bloqueia esperando resultado
+            - Quando operação termina sem demora (ex. Memória gráfica), 
+              driver precisa bloquear
+        
+        7. Após execução, verifica se houve erro e pode pedir para
+           reexecutar.
+
+* Software independente de dispositivo
+    - A maior parte do do software de I/O é independente de dispositivo.
+        - Nomes de arquivo, número de bytes a ser lido, posição a 
+          ser olhada, etc.
+    - Cuidado: ainda temos CLASSES de I/O: bloco e caracter.
+    - Divisão exata de limites entre software independente de
+      dispositivo e drivers depende do sistema.
+        - Em alguns sistemas, driver faz funções que poderiam ser
+          independentes, oferencendo visão mais abstrata.
+    
+    - Funções básicas
+        
+        1. Interface uniforma para drivers
+        
+        2. Administração de nomes de dispositivos
+            - Mapeia nomes simbólicos para dispositivos reais
+            - Em Minix I-node para arquivo especial, o "major device
+              number" é usado para localizar driver e o "minor device 
+              number" é passado como parâmetro para localizar qual
+              o dispositivo.
+        
+        3. Proteção para dispositivos
+            - Como prevenir acesso indevido?
+            - Minix/UNIX usa proteção do sistema de arquivos
+        
+        4. Possibilitar blocos de tamanho padrão
+            - Dispositivos diferentes podem ter tamanhos de setores
+              distindos
+            - Camadas mais altas vêem apenas "dispositivo virtual"
+              padrão.
+              pr
+    
+    - Outras funções básicas
+        1. "Buffering"
+            - Bloco: Hardware lê/grava blocos grandes, usuário pode
+              ler/gravar até um byte.
+            - Char: usuários podem escrever mais rápido que dispositivo
+              pode aceitar/teclado pode chegar antes do uso.
+        
+        2. Cuidar da administração do espaço alocado em dispositivos 
+           de bloco (se não houver um bloco grande o suficiente, é ele
+           que pode, por exemplo, particionar os dados em várias partes).
+        
+        3. Reservar e liberar dispositivos dedicados
+            - Fitas magnéticas, gravador de backup, dvd, etc...
+        
+        4. Relato de erros
+            - Maior parte feita pelos drivers, já que erros em sua
+              maioria são específicos de dispositivos.
+    
+    - Esse é o SISTEMA DE ARQUIVOS
+
+* Software no nível de usuário
+    - Rotinas de I/O em Bibliotecas
+        - printf, scanf, fprintf, etc.
+    - Comandos de leitura/escrita em linguagens.
+    - Colocam parâmetros nos locais corretos para chamadas de sistema.
+    - Rotinas que constroem I/O a partir de especificações (atoi,
+      printf, etc.)
+    - Outros programas
+        - Spooling
+            - Spooling directory + darmon. O daemon é o único com acesso
+              à impressora.
+        - E-mail, acesso à redes, etc.
+    - NÃO fazem parte do SO.
+
+* I/O em Minix
+    - Interrupções
+        - Já tratado, feito no Kernel
+    - Drivers dos dispositivos
+        - 1 para cada classe de dispositivos de I/O
+        - Processos completos, com seu estado, registradores, mapas de
+          memória, etc.
+        - Comunicação inter-processs e com sistema através de mensagens
+          (em geral, para o System Task)
+        - Cada driver escrito em arquivo fonte separado.
+            - Escrita de áreas de outros processos através de mensagens
+              do Kernel.
+        - Processos normais, apenas com priviléfios diferentes de
+          mensagens (funcionam do mesmo modo, mas podem mandar algumas
+          mensagens que outras partes do sistema não podem).
+    
+    - Implementação diferente do Unix
+    
+                      Minix             :            Unix
+         ===============================:=============================
+         - processo independente,       : - Duas áreas no processo
+           comunicação por mensagens    :   user space e kernel 
+         - mais modular                 :   space
+                                        : - Chamada ao sistema
+             User   User  ...  User     :   como chamada de 
+             app    app        app      :   procedimento
+                     ↘                  : - Causa interrupção, 
+             Pros      File             :   kernel verifica se OK,
+            Server    Server            :   muda para kernel space
+                        ↘               : - Mais rápido
+            Audio  ...  Disk   Printer  :  
+            Driver     Driver  Driver   :         User space
+                         ↙              :             ↕ 
+             Kernel  System    Clock    :        Kernel space
+                      Task     Task     :
+    
+* Principais Drivers do Minix: 
+    * RAM Disk
+        - Permite tratar a memória como dispositivo de block, mas
+          com acesso instantâneo.
+        - Várias áreas da memória podem ser usadas como RAM disk,
+          cada uma com minor device number diferente.
+        - RAM Disks podem ter interrupção.
+        - 4 RAMdisks
+            - /dev/ram
+                - Disco RAM própriamente dito, usado para salvar os
+                  arquivos mais acessados frequentemente com o objetivo
+                  de acelerar seu acesso.
+                - Utilizado para versões cd/dvd
+                - Em Minix1 era usado para rodar Minix em computadores
+                  com apenas 1 floppy, colocava-se o "root" em um
+                  RAMdisk
+            - /dev/mem
+                - Usado para tornar o acesso a memória padronizado 
+                  como qualquer acesso a dispositivo de bloco.
+                - Só pode ser usado como super-usuário
+            - /dev/kmem
+                - Semelhante ao anterior, mas tem como endereço ZERO
+                  o primeiro byte da memória do Kernel.
+                - Localização intersecta a do ramdisk anterior.
+            - /dev/null
+                - Arquivo especial que aceita dados e dos descarta
+                - Utilizado por usuários da shell para descartar saídas.
+        
+    * Discos
+        - Hardware
+            - Discos são organizados em cilindros, cada um contento uma
+              ou mais trilhas (dependendo do número de cabeças)
+            - Cada trilha é dividira em setores, todos com mesmos
+              tamanho.
+            - Velocidades de acesso têm velocidades diferentes.
+        - Software
+            - Algoritmos para escalonamento de disco
+                - Otimizando-se o movimento do braço do disco pode-se
+                  melhorar significativamente a performance de sistemas
+                  com muitos processos.
+                - Requisições são geralmente mantidas em uma tabela por
+                  cilindro, cada entrada em uma lista ligada.
+                - Suporemos requisições para cilindros: 3, 36, 16,
+                  34, 9, 13 e braço no cilindro 14.
+                - Métodos:
+                    
+                    - FIFO
+                        - Dispensa explicações
+                        - No exemplo: 3, 16, 16, 34, , 13 (111 trilhas
+                          percorridas)
+                    
+                    - SSTF (Shertest Seek Time First)
+                        - Próxima requisição é aquela que envolve menor
+                          movimento do braço
+                        - No exemplo: 13, 16, 9, 3, 14, 16 (53 trilhas
+                          percorridas)
+                        - Melhor fluxo (throughput)
+                        - Espera indefinidamente longa é provável,
+                          conjunto pequeno de processos pode monopolizar
+                          discos.
+                    
+                    - Algoritmo do elevador
+                        - Próxima requisitção a ser tratada é aquela que
+                          envolve o menor movimento do braço, na mesma
+                          direção do último movimento, senão apenas o
+                          mais próximo.
+                        - No exemplo: 13, 9, 3, 16, 34, 36 (44)
+                        - Favorece setores internos do disco (alguma
+                          probabilidade de adiamento indefinido)
+                    
+                    - Elevador unidirecional
+                        - Usa apenas uma direção para atender os pedidos
+                        - Supondo de fora para dentro: 13, 9, 3, 36, 34,
+                          16 (64)
+                        - Elimina favorecimento de trilhas
+                        - Aceleração do braço tem demora, voltar direto
+                          ao início é mais rápido que percorrer soma de
+                          trilhas.
+                    
+                    - Variação: após início do movimento, novas
+                      requisições entram em lista separada
+                        - Elimina possivbilidade de adiamento indefinido
+                    
+                    - Escalonamento de setores dentro de trilha:
+                      ordenação otimiza atrasos de rotação
+                      desnecessários.
+
+                    - Buffer de trilha: tempo de busca para noa trilha
+                      maior que ler trilha completa.
+                        - Alguns drivers guardam trilha inteira para
+                          otimizar acessos consecutivos na mesma trilha.
+                        - Ás vezes feita pelo controlador.

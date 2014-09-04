@@ -49,3 +49,8 @@ No EP, será necessário fazer duas modificações:
    
    O funcionamento do 'fork' é um bom exemplo de como se comunicar 
    com o 'process manager' (e este, com o 'system task').
+
+DICAS: 
+1) Olhar código do fork
+2) Olhar código do system task
+3)Colocar a prioridade como prioridade de usuário (fazer testes!)
