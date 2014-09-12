@@ -53,15 +53,15 @@ ARQUITETURA COMPUTADOR
         Setor: mínimo de bytes que podem ser escritos na memória
     
     - A taxa de transferência para o disco é muito lento, porque 
-      a rotação do disco demora em taxa de nanossegundos
+      a rotação do disco demora em taxa de milissegundos
 
 * Outros dispositivos de I/O:
     - Discos, vídeo, teclado, mouse, interfaces de rede, etc.
     - CPU não se comunica com dispositos (em geral, analódigos), mas 
-      com o circuíto difital de controle (controlador)
-    - Controladores sãoconectados ao barramento, via alguns
+      com o circuíto didital de controle (controlador)
+    - Controladores são conectados ao barramento, via alguns
       registradores mapenados na CPU
-    - Cada controlador tem associado um "device driver" (interfaces
+    - Cada controlador está associado a um "device driver" (interfaces
       padrão para acesso aos sistemas, convertidos via programas
       específicos em assembly)
     - Quando acabou? "bus waiting" ou interrupção.
@@ -98,8 +98,8 @@ ARQUITETURA COMPUTADOR
                    ocupando a CPU. Nesse estado, ele só precisa ocupar
                    a CPU)
         - Blocked Suspended: Se muitos programas estão rodando ao 
-                             mesmo programa, um programa pode ser 
-                             suspendo, e fica aguardando até que
+                             mesmo tempo, um programa pode ser 
+                             suspenso, e ficar aguardando até que
                              o sistema se desocupe. Nesse estado,
                              ele ainda está aguardando por alguma
                              chamada ao sistema.
@@ -153,9 +153,9 @@ ARQUITETURA COMPUTADOR
         - Os filhos só podem saber quem são seus pais usando os meios
           de comunicação:
             - Mensagens: Entre processos
-            - Arquivos: Escrecendo entre um e outro
+            - Arquivos: Escrevendo entre um e outro
             - Pipes (|): Muito mais rápido que usar os arquivos, porque
-              cria-se um buffer na memória, em ve de um arquivo no
+              cria-se um buffer na memória, em vez de um arquivo no
               disco.
             - Sinais (signal): espécie de sinal assíncrono que faz com 
               que o receptor tenha código desviado para endereço 
@@ -214,23 +214,23 @@ ARQUITETURA COMPUTADOR
     - A terceira camada (servidores) são os que se comunicam com os
       programas, e são todos são os que podem se comunicar com os que
       estão abaixo.
-    - A quarta cadafa são os processos normais do usuário, se
+    - A quarta camada são os processos normais do usuário, se
       comunicando com servidores de cada camada.
     
-    - 4 camadas: kernal (escalonamento de processos, tempo, tabelas,
+    - 4 camadas: kernel (escalonamento de processos, tempo, tabelas,
       sistema de mensagens), drivers (abstração dos dispositivos), 
       estratégias de escalonamento, sistema de arquivo e comunicação 
       (apresentam "máquina virtual"), processos de usuário.
     - Apenas 1 camada em "espaço de kernel".
-    - Outras camandas possuem processos sem compartilhamento de memória:
-      comunicação por mensagens. As mensagens são implementadas usando um
+    - Outras camadas possuem processos sem compartilhamento de memória:
+      comunicação por mensagens. As mensagens são implementadas usando uma
       chamada de sistemas específica. Essas mensagens têm uma estrutura 
       específica, em que é guardada um ponteiro para o texto e o processo
       que enviou. A pessoa que enviou é bloqueado enquando ocorre a
       mensagem. O recebedor terá a mensagem COPIADA dentro do outro 
       processo, para ser lida. Quem implementa esse envio é o SO, fazendo
       a parte do baixo nível. O processo que ENVIA manda uma mensagem
-      com a chamada 'send'. O processo querecebe fica com um 'receive',
+      com a chamada 'send'. O processo que recebe fica com um 'receive',
       aguardando até receber algo. O 'send-receive' faz uma chamada e
       espera por ela. Esse processo é síncrono.
     - A mensagem é um processo síncrono, e é bem diferentes de sinais.
@@ -255,11 +255,11 @@ ARQUITETURA COMPUTADOR
     - Chamadas de sistema do Minix
         - fork (única maneira de criar novos processos)
             - Gera duas cópias idênticas nas memórias separadas
-            - Chamada volta zer para processo gilho, e pid para
+            - Chamada volta zero para processo filho, e pid para
               o processo pai
         
         - wait()
-            - Processo pai aguarda o final de execução de umdos filhos
+            - Processo pai aguarda o final de execução de um dos filhos
         
         - execve(name,argv,envp)
             - A imagem do processo é substituída pelo conteúdo de um
