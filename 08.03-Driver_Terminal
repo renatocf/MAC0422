@@ -1,0 +1,61 @@
+Driver de Terminal
+====================
+
+* Hardware RS232
+    - Terminais com tela e teclado que se comunica por interface serial, 
+      1 bit de cada vez, em geral 10 bits de 25 pinos: 1 para transmitir,
+      1 para receber e 23 para funções de controle (300-9600bps).
+    - 10 bits para transmitir 1 bit de indormação: codificação mais comum
+      usa 1 bit deinício, 7-8 bits de dados com 1 bit de paridade, 1 ou 2
+      bits de parada.
+    - Gradualmente substituídos por USB nos micros pessoais, mas ainda muit
+      usados em vaixas registradoreas, leitoras de código de barra, e
+      dispositivos de controle remoto industrial.
+    - Hardcopy (impressoras), glass TTY (terminais burros), terminal
+      inteligente (memória + CPU, entende comandos e após sequência de
+      escape), blit (terminal inteligente gráfico serial).
+    - Barramento/UART (Universal Assincronous Receiver/Transmiter)
+        - Driver escreve um caracter por vez que UART transmite.
+
+* Hardware Mapeados na Memória
+    - Memória especial (vídeo RAM), que é parte do espaço do 
+      endereçamento (controlador de video)
+    - Parte integral do computador
+    - Cοntrolador do vídeo, no mesmo cartão que a VRAM, lê VRAM e manda
+      sinal de vídeo para monitor.
+    - "Character mapped display" (IBM-PC original)
+        - Cada caracter ocupava 2 bytes, um com dado e outro com
+          atributos - cor, reverso, piscar, etc).
+        - Tela com 25x80 varacteres,
+        - Caracter aparece na tela no próximo ciclo do monitor.
+        - Muito mais rápido que RS232: 12ms x 2083ms.
+    
+    - Bit mapped
+        - Cada pixel no terminal controlado por 1 ou mais bits na
+          memória.
+        - Sinais para apertar e soltar uma tecla, permitindo combinações
+          diferentes na tecla.
+
+* Tarefas de teclado
+    - Coletar caracteres
+    - Converter # da tecla para código (ASCII, etc.)
+    - Bufferização (usuário ainda não está esperando entrada).
+        - "poop" de buffers: alocados dinamicamente conforme necessidade
+        - Buffer direto no registro do terminal - driver mais simples.
+    - echo (imprimir na tela o que foi digitado)
+        - echo em hardware é ruim (como para modo senha).
+        - pode ser complicado se usuário quando programa está
+          "imprimindo".
+        - Tratar quando o tamanho é maio que a tela (wrapping).
+        - TABS (como colocar seus tamanhos).
+        - Tratamento de teclas de escape e suas ações.
+
+* Tarefas de tela
+    - Mais simples que teclado
+    - RS232 diferente de Mapeado em Memória
+        - RS232:
+            - BUffers de saída diferentes para cada terminal
+            - Após toda a saída ser copiada para buffer, caracter é
+              enviado e driver bloqueia até completar transmissão.
+        - Mapeado em memória
+            - Cada caracter é colocado unicamente na tela.

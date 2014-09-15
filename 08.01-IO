@@ -1,0 +1,66 @@
+Principais drivers do Minix
+=============================
+
+* Software: algoritmos para escalonamentode disco
+    - 3 tempos dominam o uso de um disco: tempo para rotação do braço,
+      tempo de latência para ligação e tempo de leitura.
+    - Otimizando-se o movimentodo braço do disco pode-se melgorar
+      significativamente a performance de sistemas com muitos processos.
+    - Requisições são geralmente mantidas em uma tabela
+      por cilindo, cada entrada em uma lista ligada.
+    - Algoritmos (leitura: (3, 26, 16, 34, 9, 13)):
+        - FIFO: 111 trilhas percorridas
+            (Pode ter adiamento indefinido)
+        - SSTF (shortest seek time first): 53 trilhas percorridas
+            (Favorece trilhas do centro, pode ter adiamentos indefinido)
+        - Elevador: 44 trilhas
+            (Favorece trilhas do centro, pode ter adiamentos indefinido)
+        - Elevador unidirecional: 64 trilhas
+            (Pode ter adiamento indefinido)
+        - Elevador unidirecional com duas filas
+            (Algoritmo ideal, cria fila para novas requisições)
+    - Escalonamento de setores dentro de trilha: ordenação otimiza 
+      atrasos de rotação desnecessários.
+    - Buffer de trilha: tempo de buscas para nova trilha maior que
+      ler trilha completa.
+        - Alguns drivers otimizam isso
+
+    - Erros
+        - Erro de proramação (# de setor inválida) - abortar ou avisar
+        - Checksum error: transiente (poeira?) - repetir
+        - Checksum error: permanente (bloco com dano físico) - marcar bloco
+            - Problema: backup pode ser por bloco
+            - Arquivos com blocos inválidos (sistema de arquivos)
+            - Trilhas reserva, blocos inválidos substituídos por outros
+              reserva automaticamente.
+        
+        - Erro de busca (braço foi para setor errado): alguns controladores
+          já reconhecem sozinhos.
+        
+        - Erro no controlador: precisa ser resetado.
+
+    - Minix Floppy: exemplo de driver
+        - Floppy
+            - Dispositivo removível barato comum até os anos 90
+            - Disco de material flexível
+            - Alto desgaste, baixa velocidade
+        - Pouca probabilidade de concorrência no floppy
+            - Blocos de 1k, setores de 512b: blocos grandes minimizam 
+              acesso ao disco, mas são opostos.
+            - FIFO: pouca probabilidade de concorrência no acesso ao 
+              floppy.
+        - do_rdwt (rotina do driver para leitura e gravação)
+            - dma-setup: inicializa dados do chip DMA para que esta
+              transfira diretamente dados à memória.
+            - start_motor: verifica se motor está funcionando, senão 
+              emite comando para ativá-lo.
+            - seek: verifica se o braco está no lufar certo, senão 
+              instrui o controlador e dá um receive.
+            - transfer: emite comando de leitura/escrita e em seguida 
+              dá um receive, o qual verifica registradores do controlador.
+              Se erro, retorna código de erro
+            - clock_mess: manda mensagem ao clock driver para acionar 
+              timer que chama procedimento para desligar o motor em 3 
+              segundos (caso haja novo acesso em breve, motor já está 
+              ligado, senão, desligamento evita desgaste excessivo).
+            - stop_motor: procedimento para parar motor.

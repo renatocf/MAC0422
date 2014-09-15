@@ -1,0 +1,36 @@
+System Task (driver em kernel mode)
+=====================================
+
+* Processo rodando no espaço de endereçamento do kernel (juntamente
+  com clock task).
+
+* Até o Minix 2, todos os drivers eram tasks (dentro do Kernel Space),
+  por questão de eficiência.
+
+* Recebe todas as chamadas ao Kernel
+    - Divisão em camadas do Minix impede comunicação dos servidores com
+      Kernel, porém existem tarefas que devem ser relegadas a este (ex:
+      criação de processo com chamada 'fork')
+    - Recebe também chamadas dos Drivers.
+
+* Mensagens tratadas
+    
+    - SYS_FORK
+        Process manager informa sistema que novo processo deve ser
+        criado. Mensagem contém índices onde pai e gilho devem estar 
+        na tabela (da qual PM e FS têm sua própria cópia)
+    
+    - SYS_NEWMAP
+        Após criar bnova entrada na tabela, PM aloca memória para este
+        processo filho. COm esta mensagem, MM informa o Kernel sobre
+        novo mapa de memória para processo filho. Passa um ponteiro
+        para o mapa. Essa informação é usada para preencher os
+        p_regs contendo os "segment registers"
+    
+    - SYS_EXEC
+        - Chamada pelo PM quando o processo invoca exec(). Cria nova
+          pilha para o processo e aloca argumentos nela. SYS_ECEV recebe
+          apontaro para nova pilha e informa o kernel sobre ela.
+    
+    - SYS_XIT
+        - Quando o processo emite a chamada EXIT.

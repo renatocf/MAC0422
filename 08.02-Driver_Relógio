@@ -1,0 +1,63 @@
+Drivers de relógio
+====================
+
+* Hardware
+    - Dois tipos:
+        - Ligado à rede elétrica (gera interrupções em ciclos de 1/60
+          segundos, no Brasil) - não usados atualmente
+        - Criscal (oscilador de cristal + contador + registrador com
+          constante): contador é inicializado e decrementado a cada 
+          sinal do criscal, a frequências de até 20Mhz)
+    - Manter hora correta
+        - 64 bits
+        - Tempo em segundos + tics
+        - Hora do boot em segundos + tics
+    
+    - Funções importantes:
+        - Não deixar processos rodarem por mais que sua fatia de tempo.
+        - Quando proceso começa a rodar, relógio é iniciado pelo valor
+          do quantum, quando interrupção é gerada, escalonador é gerado.
+    
+    - Contabilizar uso de CPU
+        - Campo na tabela de processos contabilizado por tics.
+        - Atualização (verificação de qual processo irá rodar) feita a 
+          cada interrupção (não a cada tic, o que seria muito caro).
+
+    - Implementar alarmees (chamada ao sistema por processos de usuário)
+        - Alarme geralmente é um sinal (para que o processo possa rodar 
+          e essa chamada seja ASSÍNCRONA).
+        - Pode-se usar lista ligada com tempos dos alarmens, com
+          diferença para a próximo alarme e contador de tivs até próximo
+          alarme: quando hora do dia é atualizada, driver verifica se
+          algum timer venceu.
+    
+    - Fornecer alarmes especiais para o sistema
+        - Watchdog timers: semelhante aos sinais para usuário, mas
+          driver chama procedimento estabelecido quando se programou
+          alarme (e.g. stop_motor no Floppy Minix).
+    
+    - Coleta de estatísticas em geral
+        - Profiling: a cada tic, driver verifica se processo está sendo
+          "profiled" e atualiza contador de tivs do "bin" correspondente    
+          ao PC.
+    
+    - Tipos de mensagem 
+        - SET_ALARM
+            - PID, procedimento a ser chamado, espera
+            - Para usuário, chamada de sistema através de processo
+              servidor.
+            - Cada processo pode ter apenas um alarme, novo alarme
+              cancela o anterior.
+        - GET_TIME
+            - Retorna segundos desde 1/1/1970
+        - SET_TIME
+            - Apenas pelo super-usuário
+            - Poderia alterar funcionalidades relacionadas ao chrown, 
+              (agenda de tarefas). Todos os procedimentos periódicos
+              do SO poderiam ser desativadas - e com isso, o
+              procedimento de segurança.
+        - CLOCK_TICK
+            - Mensagem enviada ao driver quando interrupção de relógio
+              ocorre.
+            - Driver atualiza contadores, verifica alarmes e vê se
+              fatia de tempo venceu.
