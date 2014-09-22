@@ -1,0 +1,289 @@
+Administração de memória
+==========================
+
+* Quando?
+    - Sempre que existe um Sistema Operacional
+
+* Hierarquia
+    - CACHE ↔ Memória Principal ↔ Memória Secundária
+    - Princípio da localidade central na ideia de Cache
+        - De forma geral, ao criarmos um programa, as regiões de
+          memórias que acessamos são as que estão próximas da que
+          acabamos de acessar (o que costumamos fazer ao percorrer
+          vetores, matrizes, entre outros).
+
+* Tipos de administração de memória
+    
+    - trivial: colocamos todo o programa na memória
+    
+    - Escolha (fetch) - quando escolher o próximo pedaço a ser 
+      transferido para a memória
+        - "demand": sóquando o trecho de memória é requisitado.
+        - antecipatória: sistemas de alta memória
+    
+    - Colaboração onde colocar um programa/trecho na memória
+        - Qual será a posição do programa na memória
+    
+    - Reposição ("replacement"): o que retirar da memória para 
+      livrar espaço.
+
+* Memória real
+    - Monoprogramação sem "swapping"
+        - Só 1 programa +SOnamemória decada vez.
+        - Quando um processo termina (e só então), um novo processo
+          é carregado em seu lugar.
+    
+                    .------------------------.
+                    | Extended Memory        |
+                    |                        |
+                    | BIOS ROM               |
+                    |                        |
+                    | UMB (unused mem block) | 
+                    |                        |
+                    | Network ROM BIOS       |
+                    |                        |
+                    | Hard Disk ROM BIOS     |
+                    |                        | 
+                    | UMB (unused mem block) | 
+                    |                        |
+                    | Video ROM BIOS         | BIOS: Basic Input
+                    |                        |       Output System
+                    | UMB (unused mem block) | (uma espécie de "driver")
+                    |                        |
+                    | Video RAM              |
+                    |                        |
+               640K |------------------------|
+                    |                        |
+                    | Avaiable for Programs  |
+                    |                        |
+                    |------------------------|
+                    | COMMAND.COM (shell)    |
+                    | Configuration Files    |
+                    | BIOS Code              |
+                    | System Data Place      |
+                    '------------------------'
+
+    - Programas muito grandes: OVERLAY
+        - Programador definia que parte do programa é carregado 
+          de cada vez.
+        - Área fixa e área de troca de memória
+        - Comandos para substituir partes da memória.
+    
+    - Multiprogramação
+        - Computadores usavam em média apenas 20% da CPU durante a 
+          execução dos programas
+        - Computadores extremamente caros:necessário maximixar o uso
+        - Mais de um programa namemória de cada vezpermite usar a CPU
+          quando outro programa está aguardando ação de I/O
+        - Como fazer com a memória? (onde colocar? quem colocar?)
+    
+    - Particionalemnto da memória
+        - A memória é dividida em várias partes.
+        - O programa é colocado em uma das partições.
+        
+        - Partições fixas
+            - Partições na memória são pré-definidas na instalação
+            - Proteção por "boundaru registers" (no IBM360 o código
+              de acesso ficava na PSW)
+            - 1 fila de "jobs" para cada partição (simples para o SO).
+            - Problemas: Fragmentação Interna (uso parcial da memória
+              da partição - FRAGMENTAÇÃO é usualmente associada a um
+              desperdício de memória) e partições podem ficar ociosas 
+              por muito tempo (pois os programas ficam APENAS dentro
+              daquela partição, e não podem usar outra vazia enquanto
+              ela está ocupada).
+            
+            - Tradução e "loading" absolutos
+                - Compilador é informado sobre qual será a partição
+                  utilizada e gera diretamente endereços absolutos
+                  dentro da partição.
+                - Filas de jobs por partição.
+
+            - Tradução e "loading" relocáveis
+                - Compilador compila programa de maneira que ele possa
+                  rodar em qualquer partição
+                    - Mantém lista de endereços absolutos e os atualiza
+                      para carregar o programa (tabela com endereços).
+                      O programa é carregado com um pré-processamento
+                      pelo LOADER.
+                    - Endereço relativo a um registrador-base (possível
+                      mover programa na memória) - torna o programa
+                      mais lento (para acessar o registrador), mas 
+                      permite mais flexibilidade.
+                
+                - Usando qualquer uma das técnicas, o SO pode 
+                  colocar o processo para rodar onde ele couber.
+
+                - Ambas as técnicas são difíceis em C.
+            
+        - Partições variáveis
+            - Sem limites fixos
+            - Programas ocupam apenas um espaço previsto.
+            - É necessário uma "lista livre" para os pedaços
+              disponíveis.
+            - Problema: Fragmentação externa (buracos pequenos demais
+              para serem aproveitados).
+                - "coalescinf holes" (buracos adjacentes se juntam)
+                - Compactação: mantém espaço livre contíguo
+                    - Tempo de compactação é improdutivo (overhead).
+                    - Sistema previsa parar (ruim para tempo real
+                      e interetivo).
+                    - Como envolve realocar programas, é necessário
+                      interromper toda a execução do sistema.
+            
+                    .----------.    .----------.    .----------.
+                    |    SO    |    |    SO    |    |    SO    |
+                    |----------|    |----------|    |----------|
+                    |==========|    |          |    |          |
+                    |==========|    |   FREE   |    |   FREE   |
+                    |==========|    |          |    |          |
+                    |++++++++++|    |++++++++++|    |++++++++++|
+                    |++++++++++|    |++++++++++|    |++++++++++|
+                    |++++++++++|    |++++++++++|    |++++++++++|
+                    |**********|    |**********|    |          |
+                    |**********|    |**********|    |   FREE   |
+                    |**********|    |**********|    |          |
+                    |   FREE   |    |   FREE   |    |          |
+                    '----------'    '----------'    '----------'
+            
+            - Para melhorar, podemos usar estratégias de colocação:
+                - First-fit, next fit: rápido e simples.
+                - Best-fit:  quanto menor o desperdício de memória, 
+                             melhor (mas gera vários pedaços pequenos,
+                             fragmentados, e inúteis).
+                - Worst-fit: melhor deixar buracos maiores, com maior
+                             chance de serem usados.
+            
+            - Implementação
+                - Bitmap:
+                    - 1 bit para cada região de memória (a região
+                      deve ser maior do que bytes)
+                    - Encontrar "zero runs" ao alocar (se o programa
+                      precisa de uma certa quantidade de memória, é
+                      necessário encontrar um trecho, pelo bitmap,
+                      identificado pelos 0's, para ele ser alocado)
+                    - Operação muito lenta (precisa buscar no bitmap
+                      e ficar analisando ao alocar o programa)
+
+                - Lista ligada
+                    - Mais rápido que a anterior.
+                    - Uma ou duas listas (partições usadas e livres).
+                
+                - "Buddy system"
+                    - Tamanhos pré-definidos como potências de 2
+                    - 1 lita para cada tamanho (32 listas em memória
+                      de 4GB, mas havia MUITO MENOS na época).
+                    - Quando o espaço é liberado, Vê-se se o espaço
+                      contíguo é livre. Nesse casp, junta e repete
+                      o processo. A busca é apenas em uma lista.
+                    - O processo é muito rápido
+                    - Problema: fragmentação interna (média de 25%,
+                      com podencial de quase 50%)
+            
+        - Swapping
+            - Possível com ambos os esquemas anteriores (partição
+              fixa e variável).
+            - Programa pode ser retirado damemória para otimização
+              de recursos.
+            - Programas são retirados quando:
+                - Inativo e há outro para rodar (esperando I/O).
+                - Programa precisa de mais memória - precisa trocar
+                  de partição.
+            
+            - Precisa de "swap space" na memória secundária (disco).
+            
+            - No Linux, existe área de swap, mas ela funciona para 
+              a memória virtual. Em SO, porém, costuma-se associá-la
+              com a memória real.
+            
+* Memória virtual
+    
+    - Com o swapping, era possível carregar e retirar um programa
+      de lugar. Por que não poderíamos colocar trechos de programas
+      espalhados?
+    - Os endereços "virtuais" podem não ser os mesmos dos reais
+    - É necessário um mecanismo de tradução eficiente, sob o preço
+      de perder a vantafem de reuso da CPU: o apoio vem do hardware.
+    - Permite endereçar um espaço maior de memória
+        
+                     Virtual                   Physical
+                    addresses       Address    addresses
+                |               |  Conversion  |       |
+                |       *-------:-----------.  |       |
+                |       *-------:-------.   |  |       |
+                |       *-------:---.   |   '->|       |
+                |               |   |   |      |       |
+                |               |   '---:----->|       |
+                |               |       |      |       |
+                |               |       |      
+                |               |       |    Disk addresses
+                |               |       |        _____
+                |               |       |      .´     `.
+                |               |       '----->|`-----´|
+                                               |       |
+                                                `-----´
+            
+    - Como a memória virtual pode ser maior que a real, é necessário
+      armazenar trechos não utilizados.
+    - Quando não está armazenada dentro da memória, pode-se colocar
+      a parte do programa no disco. Isso, porém, é eficiente APENAS
+      se valer o princípio da localidade.
+
+    - Simplifica a codificação e compilação do programa.
+
+    - Memória organizada sempre em BLOCOS
+        - Overhead e manipilação de 1 palavra de cada ve é excessivo
+        - Blocos pequenos envolvem maior overhead
+        - Blocos grandes demrammais para transferir e cabem em
+          menor número na memória real.
+        - PÁGINAS: blocos com tamanhofixo
+        - SEGMENTOS: blocos com tamanho variável
+    
+    - Funcionamento:
+        - Cada endereço tem 2 partes: base e deslocamento.
+        - Tabela de mapeamento de ndereços (por processo? por memória?).
+        - Registrador especial indica início da tabela de tradução.
+
+            .---------.           .---------.---------.
+            |    A    |           |    B    |    D    |
+            '---------'           '---------'---------'
+                 |                     |            |
+               .---.                   |            |
+               | + |<------------------'            |
+               '---'                                |
+                 |                                  |
+                 |   A  .-------.            .---.  |
+                 |    |||       |       .----| + |<-'
+                 |    |||       |       |    '---'
+                 |    |||       |       |      |
+                 |   B|||       |       |      |
+                 |    \/|-------|       |      |
+                 '----->|R|  |B'|-------'      '-> E = B' + D
+                        |-------|
+                        '-------'
+
+        - Funcionamento básico
+            - Hardware do computador verifica tabela de indexação
+              (bit R da tabela)
+            - Se a página está na memória, acessa o endereço real
+              (a partir de B', usando o deslocamento)
+            - Se a página não está na memória, lê seu conteúdo da 
+              memória secundária (ex: disco)
+                - Caso a memória esteja cheia, escolhe um bloco
+                  para ser removido temporariamente.
+                - Eventualmente a remoção temporária pode envolver
+                  escrita nodisco.
+
+        - Campos da tabela de indexação
+            - Endereço na memória real do início do vloco
+            - Endereço namemória secundária do bloco
+                - Usado para buscar páginas ausentes e para gravar 
+                  páginas que são retiradas da memória
+            - Dirty bit
+                - Defina quando uma página deve ser escrita na
+                  memória secundária (se não foi modificada, já 
+                  economiza um acesso ao disco)
+            - Reference bit
+                - Informa se a página foi acesso após a primeira carga.
+            - Proteção
+                - Usado para verificar se o acesso é válido.
