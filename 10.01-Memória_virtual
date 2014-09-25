@@ -1,0 +1,286 @@
+Memória Virtual
+=================
+
+* Blocos de tamanho fixo chamados "páginas"
+
+* Páginas da memória alinhadas em endereços múltiplos do tamanho das
+  páginas.
+    - Para obter enderelo real basta concatenar número da página real
+      com o deslocamento.
+    - Entrada na tabela de mapeamento:
+        - Residence bit
+        - Endereço da página na memória secundária
+        - Número da página na memória real
+    - Problema: fragmentação interna
+        - Média de meia página de desperdício
+
+* Mapeamento direto
+    - Antes de um processo começar a rodar, o SO carrega o endereço da
+      tabela de mapeamento no registrador especial.
+    - Ciclo de mapeamento direto domina tempo de ecevução da instrução.
+        - Mapeamento direto duplica tempo de acesso a memória (dois
+          acessos para obter um endereço: acesso à tabela e acesso
+          final).
+        - Pode-se tentar colocar a tabela de processos em memória de 
+          alta performance (cache).
+
+* Mapeamento associativo
+    - Memória associativa é endereçada por conteúdo.
+    - Verificação feita em paralelo, tempo de acesso de uma ordem de
+      magnitude mais rápido que a memória ordinária.
+    - Memória associativa guarda a tabela com últimos acessos.
+    - Endereçamento da MA é feito pelo número da página virtual. O 
+      conteúdo é o número da página real.
+    - Princícipio da localidade garante o funcionamento.
+    
+      .------------------------.
+      | Virtual Page | Displa- |
+      |    Number    | cement  |
+      '------------------------'
+             |
+             |              .--------.--------.
+             |------------->|        |        |
+             |              |--------|--------|
+             |------------->|        |        |
+             |              |--------|--------|
+             |------------->|        |        |
+             |              |--------|--------|
+             |------------->|        |        |
+             |              |--------|--------|
+             |------------->|        |        |
+             |              |--------|--------|     .-------.---------.
+             |------------->|        |        |---> | Page  | Displa- |
+             |              |--------|--------|     | Frame | cement  |
+             |------------->|        |        |     '-------'---------'
+             |              |--------|--------|
+             '------------->|        |        |
+                            '--------'--------'
+
+* Tabela de páginas + memória associativa
+
+        .-------.
+        | P | D |
+        '-------'
+         | |
+         | |      .--------.--------.
+         | |----->|        |        |
+         | |----->|        |        |
+         | |----->|        |        |
+         | |----->|        |        |
+         | |----->|        |        |
+         | |----->|        |        |---> TLBbit
+         | |----->|        |        |        |
+         | '----->|        |        |        |
+         |        '--------'--------'        \/
+         |
+         |  TLB miss  
+         '----------->
+
+* TLBs
+    - Memória de acesso rápido para aumentar velocidade da tradução do
+      endereço virtual para o endereço real.
+    - Em geral, de 4 a 64 entradas.
+    - Várias maneiras de organização:
+        - Mapeamento direto:
+            - Primeros bits do endereço indicam entrada da tlb, que
+              então verifica se outros bits da página virtual armazenada
+              são iguais, caso seja, usa número da página real.
+            - Cada página pode estar em apenas uma posição na TLB.
+            - Podemos ter que remover a entrada mesmo quando há entradas
+              vazias.
+        - Mapeamento totalmente associativo:
+            - busca simultânea de todas as chaves
+        - Maepamento n-associativo:
+            - bancos associativos, cada um com n entradas
+            - primeiros bits indicam banco, cada um com n entradas
+            - cada página pode estar em n posições da TLB
+        - Custo aumenta com associatividade, velocidade também.
+
+* Segmentação
+    - Um programa pode ocupar vários "segmentos" de memória, cada um com
+      um tamanho diferente.
+    - Elimina fragmentação interna.
+    - Divisão em segmentos geralmente é "lógica".
+    - Proteção:
+        - Implementação mais complexa para proteção de acesso inválido.
+        - Porém, implementação de códigos de acesso por segmento
+          simplificada (divisão lógica, não física).
+        - Códigos de acesso: leitura, escrita, execução, "append"
+          (este último, que aumentava o tamanho do segumento).
+
+    - Campos tipicos de uma tabela de segmentos:
+        - Residence bit
+        - Tamanho
+        - Bits de acesso (r,w,e,a)
+        - Endereço do início do segmento na memória.
+        - Endereço do início na memória secundária.
+
+* Compartilhamento de memória
+    
+    - 2 entradas em tabelas de blocos diferentes podem apontar para o
+      mesmo segumento da página na memória.
+    
+    - Compartilhamento pode reduzir utilização de memória
+        - Ex: código reentrante - dados separados, mesmo segmento de
+          código.
+    
+    - Compartilhamento pode aumentar velocidade (menos falhas de
+      página).
+    
+    - Compartilhamneto mais fácil em sistemas segmentados, posi a
+      divisão de clocos e memória é lógica.
+        - Em sisteams paginados, a administração de "páginas parciais"
+          pode ser complexo.
+
+* Segmentação + Paginação
+    - Memória dividida em páginas
+    - Páginas agrupadas em segmentos
+    - Uma tabela de segmentos
+    - Cada segmento tem uma tabela de páginas
+    - Endereço maior que a memória
+    - Vantagens de ambos os sistemas
+        - Sem fragmentação externa (mas TEM interna).
+        - Unidade lógicas para compartilhamento.
+    - Maior overhead de processamento (minimizado pela TLB).
+    - Endereço dividido em 3 partes:
+        - segmento
+        - página
+        - deslocamento
+
+* Administração de memória virtual
+    
+    - Estratégias de colocação (placement stragegies)
+        - Em qual dos lugares vagos colocar?
+        - Sistemas segmentados: mesmas estratégias que partições
+          variáveis (first fit, best fit, worst fit).
+        - Sistemas com paginação (paginação pura ou segmentação com
+          paginação) → indiferente.
+        - Em geral, para otimizar, traz-se a quantidade de páginas
+          correspondente a um bloco dentro do disco (se o disco tem
+          blocos com 2mb, e as páginas têm 4kb, teremos 5 páginas
+          carregadas ao mesmo tempo).
+    
+    - Estratégias de reposição de páginas
+        - A melhor página para ser retirada da memória, caso não haja
+          espaço, é aquela que demorará mais tempo para ser usado
+          (inclusive as que enventualmente nunca seráo usadas).
+        - Há várias heurísiticas para escolher a página:
+            
+            - Randômica
+                - Supõe poucos processos com uso de memória
+                - Baixa probabilidade de escolher uma página importante.
+            
+            - FIFO
+                - Princípio: se a p[agina está há mais tempo na memória,
+                  já deve ter sido bastante usada e, portanto, a
+                  localidade já deve ter mudado.
+                - Probelma: muitas vezes, algumas páginas ficam muito
+                  tempo na memória porque são muito usadas (ex: Código
+                  de editor de textos, rotinas de chamada de SO).
+                - Anomalia FIFO (Belady et a, 1969): em alguns casos,
+                  mais memória na FIFO pode causar mais falhas de
+                  página.
+                    - Memória Real com 3 ou 4 páginas
+                    - Páginas virtuais acessadas:
+                        0,1,2,3,0,1,4,0,1,2,3,4
+            
+            - Variação de FIFO: fifo segunda chance
+                - Só são respostas às páginas com o "reference bit"
+                  desligado.
+                - Quando é necessário repor a página, a fila vai sendo
+                  examinada.
+                - Se a página da frente tem o "reference bit" desligado,
+                  a página é reutilizada.
+                - Caso contrário, o vit é desligado e a página é movida
+                  para o final da fila.
+            
+            - LRU - Least recently used
+                - Repõe a página menos usada recentemente, ou, em outras
+                  palavras, que foi usada há mais tempo.
+                - Se a págna não é usada há muito tempo, não deve ser
+                  usada no futuro próximo.
+                - Considerada boa política: problema é a implementação.
+                - Possíveis implementações:
+                    - Contadores para cada página, atualizadado a cada
+                      acesso, resposta de página com menor contador.
+                    - Quando uma página é acessada, tira-se do meio da
+                      pilha e coloca no topo. Resposta: página embaixo
+                      da pilha.
+                - Alto overhead (cada acesso)
+                - Falhas:
+                    - Loops longos
+                    - "deeply nested calls"
+            
+            - NUR - Not Used Recently
+                - Aproximaão de LRU com menos overhead.
+                - Mantém marcadas páginas usadas "recentemente".
+                - Leva em conta também que é melhor repor página que não
+                  foi alterada na memória (1 vs 2 acessos ao dico).
+                
+                - Usados 2 bits por página: access bit (para referência)
+                  e dirty bit (para modificação)
+                - Procura de páginas a serem repostas:
+                    - Página não referenciada
+                    - Páginas referenciadas e não alteradas.
+                    - Párinas referenciadas e alteradas.
+                
+                - Problema: eventualmente todas as páginas serão
+                  referenciadas.
+                    - Pediodicamente zerado o "access bit" - páginas
+                      muito usadas ficarão vulneráveis por pouco tempo.
+                
+                - Implementação
+                    - Hardware com atualização automática de dirty bit e
+                      access bit.
+                    - Uso de residence bit e bit de proteção de escrita
+                        - Residence bit substitui access bit: páginas
+                          após serem carregadas não são marcadas como
+                          residentes. Tabela adicional indica que a
+                          página está presente. No próximo acesso, após
+                          falha de página, algoritmo de paginação apenas
+                          seta o "residence bit".
+                        - Protection bit substitui dirty bit: página ao
+                          ser carregada é marcada como protegida para
+                          escrita. Primeira escrita gera falha de
+                          proteção. Algoritmo de paginação seta bit em
+                          tabela adicional, indicando que a página foi
+                          modificada e retira proteção.
+
+            - Working set
+                - Peter Denning (1968) criou teoria de que cada programa
+                  tem seu "conjunto de trabalho" (ex: página com o loop
+                  e páginas com matrizes sendo multiplicadas).
+                    - Em geral, páginas que envolvem o código do
+                      programa, a pilha, etc.
+                - Para um program rodar eficientemente, seu conjunto de
+                  trabalho precisa estar na memória real.
+                - Política de working set tenta manter este conjunto
+                  sempre na memória.
+                - Um processo deve ser mantido em memória apenas se seu
+                  conjunto de trabalho está inteiro na memória, senão
+                  deve ser retirado (swapped out).
+                - Ideia é prevenir "thrashing" (quantidade excessiva de
+                  falhas de página que causa velocidade inviável de
+                  processamento) e, ao mesmo tempo, manter o maior
+                  número de processos em memória possível.
+                - Implementação
+                    - Conjunto de trabalho CE(t,j) calculado no tempo T
+                      é o conjunto de páginas utilizadas nos últimos j
+                      acessos.
+                    - j é a "janela" do CE.
+                    - Problema: como manter o working set:
+                        - Como calcular T?
+                        - Janela é móvel, ao acessarmos a página nova, a
+                          ágina mais antifa referenciada pode sair do
+                          CE - muito caro calcular T.
+                    - Para evitar sobrecarga de contar todos os acesso,
+                      mantém-se uma aproximação do tempo do último
+                      acesso eusar janela de tempo.
+                        - Podemos usar contabilidade a cada TIC e
+                          resetar o "reference bit"
+                        - Se resetarmos o reference bit, periodicamente
+                          temos o NRU.
+
+                - Como "simular" um thrashing?
+                    - Criar vetor maior que a memória (ex: 8GB).
+                    - Acessar elementos aleatoriamente.

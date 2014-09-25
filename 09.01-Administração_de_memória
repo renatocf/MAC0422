@@ -272,10 +272,10 @@ Administração de memória
                 - Caso a memória esteja cheia, escolhe um bloco
                   para ser removido temporariamente.
                 - Eventualmente a remoção temporária pode envolver
-                  escrita nodisco.
+                  escrita no disco.
 
         - Campos da tabela de indexação
-            - Endereço na memória real do início do vloco
+            - Endereço na memória real do início do bloco
             - Endereço namemória secundária do bloco
                 - Usado para buscar páginas ausentes e para gravar 
                   páginas que são retiradas da memória
@@ -287,3 +287,6 @@ Administração de memória
                 - Informa se a página foi acesso após a primeira carga.
             - Proteção
                 - Usado para verificar se o acesso é válido.
+
+        - Todas as memórias virtuais costumam oferecer um dirty bit e
+          o reference bit. A proteção nem sempre existe.
