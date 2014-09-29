@@ -1,0 +1,205 @@
+Memória virtual
+=================
+
+* Working set: WSClock
+    - Conceitos de WS e de fifo segunda chance
+    - Funciona bem e é utilizado.
+    - Porém um conjunto de não muito claro de ideias diferentes, típico
+      de sistemas reais.
+
+    - Funcionamento
+        - Para cada processo temos residence bit (R) e dirty bit(M) 
+          mantidos por hardware. A cada k clicks R é resetado
+    - A cada tic todas as páginas são examinada e o tempo é guardado
+      para aquela sonde R vale 1. Campo de tempo é aproximação do último
+      acesso, pela resolução do relógio (na verdade, podem ser k tics)
+    - Páginas que têm tempo igual a k-j são candidatas à reposição.
+
+* Considerações sobre paginação
+    - Tamanho da página
+        
+        1. Tamanho da página = tamanho da memória (extremo)
+            - Não ocorrem falhas de página.
+            - Ao trocar um programa, é preciso recarregar toda 
+              a memória.
+            - Muita fragmentação interna.
+        
+        2. Tamanho da página = 1 byte (extremo)
+            - Falhas de página frequentes
+            - Precisa carregar dados da memória todas as vezes
+            - Fragmentação externa.
+        
+        3. Crar estatísticas para o tamanho da tabela de página
+            - Usando simulações, é possível qual tamanho é otimizado.
+            - Hoje, os tamanhos estão em torno de 4Kb a 8Kb.
+
+* Outros mecanismos de paginação
+    
+    - Paginação em múltiplos níveis
+        - Uma tabela de página por processo pode usar muita memória
+          (páginas de 4k, 42 bits, 20 bits para número de página, 
+          1 milhão de entradas).
+        - Tabela pode ser dividida em tabela primária e várias tabelas
+          secundárias (e terciárias, quartenárias, etc.)
+        - Endereço dividido em 4 ou mais seções, cada uma usada para
+          inexar uma das tabelas.
+        - Mantidas apenas tabelas secundárias utilizadas pelo programa.
+        
+                    Memória virtual                        Memória Real
+                
+        |    ID1    |    ID2    |   OFFSET   |              |       |
+             11           9           12                    |       |
+              |           '--.                              |       |
+              |              |                              |       |
+              |     |      | |                      .-----> |       |
+              |     |      | |  .-->|      |        |       |       |
+              |     |      | |  |   |      |        |       |       |
+              |     |      | |  |   |      |        |       |       |
+              |     |      | |  |   |      |        |       |       |
+              '---> | P1EA |-:--'   |      |        |       |       |
+                    |      | '----->| P1E2 |--------'       |       |
+                    |      |        |      |                |       |
+
+    - Tabela de páginas invertida
+        - Tabela flocal, cada entradadeve conter núemro da página
+          virtual e id do processo.
+        - Tabela indexada por número da página real
+        - Para procurar endereço virual do Ev para processo PID,
+          procurar entrada na tabela com este conteúdo.
+        - Se estiver na entrada i da tabea, a página real é a i-ésima
+          página.
+        - Implementações reais usam tabela de hash para busca.
+        - Arquitetura Itanium.
+
+* Esquemas de memória em processadores atuais: ARMv7
+    - Procesador RISC (Reduced instruction set)
+    - Memória paginada
+    - Corresponde BEM à necessidade de cada tipo diferente de programa.
+    - Dois níveis para estrutura da tabela de páginas
+        - Tabela de primeiro nível (pro processo) que contém ponteiro
+          para superseção, seção ou tabela secundária.
+        - Superseções: blocos de memória de 16Mb (oddset de 24 bits).
+        - Seções: blocos de memória de 1Mb (offset de 20 bits).
+        - Páginas granes: 64bk (offset de 16 bits)
+        - Páginas pequenas: 4kb (offset 12 bits)
+        - 
+    - Estrutura flexível MMU (memory management unit)
+        - Pode ser configurada para usar os vários tamanhos de página
+          bem como seções e superseções.
+        - Seções e superseções podem ser combinadas com páginas.
+        - SO pode ou não usar.
+    - Seções e superseções.
+        - Possibilidade de endereçar com apenas um nível de hierarquia
+          com grandes proporções de memória (por exemplo, SO)
+        - Uso com páginas introduz problemas comuns à segmentos de
+          tamanho variável.
+    - TLB em dois níveis
+        - microTLB
+            - Menor e mais rápida
+            - Uma para instruçes (32 entradas) e uma para dados (32 ou
+              64 entradas)
+            - TOtalmente associativa
+            - LOokup em apenas um ciclo
+            - Address Space Identifier (ASID) perminte entrada de vários
+              processos na TLB.
+            - Entradas globais (compartilhadas) e locais (por processo).
+            - Páginas têm bits de proteção verificada a cada aesso.
+            - Reposição round-robin (default) ou randômico.
+        - main-TLB
+            - Utilizada quando não há hit na micro-TLB.
+            - apenas 1 por processador, usado para instruções e dados.
+            - 4 entradas totalmente asociativas, que podem ser travadas
+              (nda: SO deve travar também páginas na memória real)
+            - 64 ou 128 entradas em estrutura 2-associativa (2x32 ou
+              2x64).
+            
+         micro-TLB                               superseção |       |
+          | ______                                          |       |
+          |-|    |               Memória virtual    .--->   |       |
+          |-|    |                  |       |       |       |       |
+          |-|    |     main-TLB     |   *---:-------'       |       |
+          |-|    |    | ______      |       | Tab.páginas   |       |
+          '-|    |    |-|    |      |       |  |    |       |-------|
+            ¨¨¨¨¨¨    |-|    |      |       |  | *--:------>|       |
+                      |-|    |      |   *---:->|    |       |-------|
+          | ______    |-|    |      |   *   |  |    |       |       |
+          |-|    |    '-|    |      |   |   |               |-------|
+          |-|    |      ¨¨¨¨¨¨          |        |    |   .>|       |
+          |-|    |                      |        | *--:---' |-------|
+          |-|    |                      '------->|    |     |       |
+          '-|    |                               |    |     |       |
+            ¨¨¨¨¨¨                             Tab. páginas |       |
+
+* Esquema de memória em processadores atuais: Intel IA-32
+    - Arquitetura segmentada
+    - 3 modos de endereçamento
+        - Flat memory (lidear de 4 Gb)
+        - Segmentado
+            - Endereço: seletor de segmento + deslocamento
+            - Endereço de memŕia de 16 bits (segmento) + 32 bits
+              (deslocamento)
+    - Endereçamento segmento-paginado
+    - 2 tabelas de segmentos, cada uma contém endereços base de até
+      8.191 segmentos.
+        - Local descriptor tabel (LDT): segmentos privados ao processo.
+        - Global descriptor tabel: segmentos compartilhados entre todos 
+          os processo (ex: SO).
+    - Entrada na GDT contém
+        - Sflag (código ou dados?)
+        - Accessed (access bit)
+        - Dirty bit
+        - Data/write enable (read only ou read/write?)
+        - Data/expansion direction (por default sefmentos no topo do
+          segmento, vit muda direção da expansão)
+        - COde/execute-onlu ou execute/read
+        - Conforming (indica se execução pode continuar mesmo se
+          nível de privilégio é elevado)
+        - Detalhe da paginação: páginas de 4Kb ou 4Mb
+
+* Esquema de memória em processadores atuais: Intel IA-64
+    - Apenas paginação (segmentação tem suporte no modo emulação de
+      IA-32 -> compatibilidade).
+    - Três modos de paginação
+        - Paginação 32 bits
+        - PAE (Physical Address Extension mode - IA-32)
+        - Paginação IA-32e - 48 bits
+    
+    - Paginação 32 bits (Páginas 4Kb ou 4Mb)
+        - Páginas 4Kb:
+            - Paginação em 2 níveis: 10 bits + 10 bits + 12 bits.
+            - Tabela de páginas (nível 2) contém base de 20 bits.
+                
+                    | Directory | Page table |   Offset    |
+                    | (10 bits) | (10 bits)  |  (12 bits)  |
+            
+        - Páginas de 4Mb:
+            - Paginação em apenas 1 nível (10 bits + 22 bits).
+                    
+                    | Page table |         Offset          |
+                    | (10 bits)  |        (12 bits)        |
+    
+    - Paginação IA-32e
+        - Endereço de 48 bits (256 terabyts) gera endereço real de 52
+          bits (4000 terabytes)
+        - Endereços virtuais de 32 bits.
+        - Gera endereços virtuais de até 52 bits.
+        - Páginas de 4Kb, 2Mb, 1Gb.
+        - Páginas de 4k:
+            - Paginação em 4 níveis (9b+9b+9b+9b+12b).
+            - Cada nível com 512 entradas.
+        - Páginas de 2Mb:
+            - Paginação em 3 níveis (9b+9b+9b+21b)
+        - Páginas de 1Gb:
+            - Paginação em 2 níveis (9b+9b+30b)
+
+    
+    - PAE: Physical Address Extension
+        - Emula PAE do IA-32
+        - Endereços virtuais de 32 bits
+        - Gera endereços virtuais de até 52 bits
+        - Páginas de 2Mb ou 4Kb
+        - Com páginas de 4Kb, tabela de páginas com 3 níveis:
+            - 2 bits + 9 bits + 2 bits + 12 bits
+            - Page director pointer tabela
+            - Page directory
+            - Page table

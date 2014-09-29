@@ -146,6 +146,26 @@ Memória Virtual
         - segmento
         - página
         - deslocamento
+            
+                    Memória Virtual                       Memória Real
+            
+          9 bits    11 bits      12 bits                   |       |
+        |   1    |     3     |    3267    |                |-------|
+            |          |            |                      |       |
+            |          |            '------------------.   |       |
+            |          '---------.                     |   |       |
+            |                    |       Tabela de   .-:-> |-------|
+            |      Tabela de     |        páginas    | |   |       |
+            |      segmentos     |      do segmento  | |   |       |
+            |      .--------.    |      .----------. | '-> |       |
+    STRB .--:--> 0 |        |  .-:--> 0 |          | |     |-------|
+     *---'  |    1 |        |  | |    1 |          | |     |       |
+            |    2 |        |  | '--> 2 |    *-----:-'     |       |
+            '--> 3 |   *----:--'      3 |          |       |       |
+                 . |        |         . |          |       |-------|
+                 n |        |         m |          |       |       |
+                   '--------'           '----------'       |       |
+                                                           |       |
 
 * Administração de memória virtual
     
@@ -251,7 +271,8 @@ Memória Virtual
                   tem seu "conjunto de trabalho" (ex: página com o loop
                   e páginas com matrizes sendo multiplicadas).
                     - Em geral, páginas que envolvem o código do
-                      programa, a pilha, etc.
+                      programa, a pilha, etc (usando partes de cada
+                      uma delas).
                 - Para um program rodar eficientemente, seu conjunto de
                   trabalho precisa estar na memória real.
                 - Política de working set tenta manter este conjunto
