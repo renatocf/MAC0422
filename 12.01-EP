@@ -1,0 +1,29 @@
+EP
+====
+
+    O novo EP tratará de compactação de memória.
+    
+            .---------------.   |   
+            |       4       |   |   Para esse EP, precisaremos_criar_
+       1087 |---------------|   |   um mecanismo_de_compactação_de_
+            |+++++++++++++++|   |   memória, que_será_acionado_em_dois
+            |+++++++++++++++|   |   casos:
+            |---------------|   |   1) Quando, na memória, não couber
+            |               |   |      mais nenhum processo;
+            |      47       |   |   2) Com uma chamada de sistema para
+            |               |   |      o process manager for acionada.
+            |---------------|   |   
+            |+++++++++++++++|   |   Precisaremos usar o fork como
+        410 |---------------|   |   exemplo, pois ele faz modificações.
+            |               |   |   Porém, não geraremos dois processos
+            |---------------|   |   filhos.
+            |+++++++++++++++|   |   
+            |+++++++++++++++|   |   Algumas preocupações extras:
+        100 |---------------|   |   - Observar em qual sentido a memória
+            |      30       |   |     é copiada pelo system task (que
+            '---------------'   |     definirá o sentido da compactação)
+                                |   - Verificar a modificação das seções
+                                |     de texto que ficam armazenadas na
+                                |     Tabela de Processos.
+                                |   - Tomar cuidado com processos 
+                                |     duplicados pelo fork.

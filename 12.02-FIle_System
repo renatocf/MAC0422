@@ -1,0 +1,116 @@
+Sistemas de arquivos
+======================
+
+* Pode-se arumentar que a melhor maneira de armazenar informação 
+  no computador seria deixá-la toda no espaço de endereçamento
+    - ex: 2^64 bytes: 2^32 bytes)
+
+* Usando proteção e compartilhamento manteria-se toda a informação
+  na memória virtual.
+
+* Alguns sementos poderiam guardar diretórios que garantiriam estrutura
+  hierárquica da informação.
+
+* Teríamos espaço de endereçamento padrão inicialiado pelo SO com 
+  todas as informações compartilhadas.
+
+* MULTICS tentou essa abordagem (1964, no MIT o sistema rodou até 10/00)
+
+* Esta abordagem, por sua complexidade não foi mais utilizada.
+
+* Maioria dos sistemas tem uma hierarquia de memória.
+    - Caches (memória dentro do computador)
+    - Memória primária
+    - Memória secundária (dispositivos)
+
+* "Sistemas de arquivos" provê a organização da memória secundária.
+  Geralmente persistente e unico para uma instalaçã de um SO.
+
+* Funções dos sistemas de arquivo
+    - Criação, eliminação e modificação de arquivos
+    - Compartilhamento de arquivos
+    - Controle de acesso
+    - Backup e recuperação de informação
+    - Acesso simbólico (por nomes) aos arquivos
+    - Prover visão lóica (não física) dos arquivos: independência de
+      dispositivo
+    - Segurança (criptografia)
+    - Integridade de arquivos
+
+* Organização de arquivos
+    - Blocos
+        - Registros (comum em mainframes, principalmente os antigos)
+        - Bytes (Unix, Minix)
+    - Métodos de acesso
+        - Sequencial (Unix/Minix - character)
+        - Indexado
+        - Aleatório (Unix/Minix - block)
+            - A leitura é igual à outra, mas é possível mudar a 
+              posição inicial de leitura.
+
+* Organização interna de arquivos
+    - Unix block:
+        - Sequência de bocos mas endereçado por bytes
+        - read/write/seek
+    - QSAM (Queued Sequencial Access Method)
+        - Arquivos organizados por blocos físicos
+        - Acesso do usuário por registro lógico definido pelo usuário
+    - ISAM (Indexed Sequencial Access Method)
+        - Organização em árvore: blocos com número fixo de registros
+        - Apontadores de outros blocos entre registros
+        - Acesso é sequencial pelo índice
+        - Esses métodos sumiram, aos poucos, porque guardar as 
+          informações dessa maneira foi passado para os sistemas 
+          gerenciadores de bancos de dados.
+    - Outros métodos (IBM): XDAP, BDAM, BSAM, BPAM, VSAM, OAM
+    - Em sistemas derivados dos computadores pessoais, em geral 
+      acesso aleatório e organização por blocos.
+
+* Tipos de arquivos
+    - Regulares
+        - Arquivos de caracter (ASCII, ...)
+            - Linhas terminadas por "line feed" ou "carriage return"
+              ou ambos.
+            - Linhas de tamanho variável
+            - Arquivos ASCII úteis porque codificação padrão de 
+              informação, facilitam uso de "pipe" para conectar saída
+              de um arquivo com entrada de outro.
+        - Arquivos binários
+            - Código: todos os SO's precisam reconhecer arquivos 
+              formatados para códio executável (TOPS-2 - DEC - inclusive
+              verifica se código estava em dia com o "fonte" recompilava
+              se necessário.
+                - Campos:
+                    - Header: Número mágico (descreve arquivo executável),
+                      tamanho da área de texto, tamanho da área de dados,
+                      tamanho do BSS, tamanho da tabela de símbolos,
+                      pondo de entrada, flas.
+                    - Texto, dados, bits de realocação (para colocar o 
+                      prorama na memória), tabela de símbolos (depuração).
+                    - Archive (Unix)
+                        - Coleção de módulos de bibloteca, compilados
+                          mas não linkados.
+                        - Cada módulo tem entradas com:
+                            - header com seu nome, data de criação,
+                              dono, códio de proteção e tamanho.
+                            - "object module"
+                    - Arquivos "fortemente tipados" podem ser problema
+                        - Ex: pré-processador de C (C++) que gera como
+                          resultado programa em C.
+                        - Deveria gerar um .c, mas só podia gerar .dat.
+                - Os scrips shell podem ser rodados porque o símbolo
+                  shebang (#!) é convertida para um número binário que 
+                  indica que o arquivo a seguir é, na verdade, um 
+                  arquivo de dados que devem ser passados para o 
+                  programa binário indicado pelo path seguinte.
+
+* Atributos comuns em arquivos
+    - Proteção
+    - Senha
+    - Criador
+    - Dono
+    - Fla de eitura/escrita
+    - Flag de "hidden file"
+    - System flag
+    - Último acesso
+    - Última alteração

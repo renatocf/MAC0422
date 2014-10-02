@@ -187,11 +187,13 @@ Memória virtual
         - Páginas de 4k:
             - Paginação em 4 níveis (9b+9b+9b+9b+12b).
             - Cada nível com 512 entradas.
+            - Devolve endereços reais de 40 bits
         - Páginas de 2Mb:
             - Paginação em 3 níveis (9b+9b+9b+21b)
+            - Devolve endereços reais de 31 bits
         - Páginas de 1Gb:
             - Paginação em 2 níveis (9b+9b+30b)
-
+            - Devolve endereços reais de 48 bits
     
     - PAE: Physical Address Extension
         - Emula PAE do IA-32
@@ -203,3 +205,26 @@ Memória virtual
             - Page director pointer tabela
             - Page directory
             - Page table
+    
+    - TLBS
+        - Conjudaa com outras  estruturas
+        - Region reisters
+        - Protection key registers
+        - Virtual hash page table walker (VHPT)
+    
+        - Mecanismo de tradução da TLB
+            - Endereço em  partes:
+                - VRN (Virtual Region Number)
+                - VPN (Virtual Page Number
+                - Page offset
+
+        - 4 unicades lóicas
+            - ITLB (instruções)
+            - DTLB (dados)
+            - Cada uma tem:
+                - translation caches (ITC, DTC)
+                    - Reposição determinada pelo hardware
+                    - Mínimo 1 entrada
+                - translation reisters (ITR, DTR)
+                    - Reposição determinada pelo software
+                    - Mínimo 8 entradas
