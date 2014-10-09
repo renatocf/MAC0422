@@ -1,0 +1,313 @@
+File system
+=============
+
+* Implementaão de sistemas de arquivos
+    - Tabela (FAT)
+        - Alguns blocos guardam indexador, que é carregado na memória.
+        - Uma entrada para cada bloco da partição do disco
+        - Entrada no diretório contém número do primeiro bloco
+        - Cada entrada na FTA contém índice do bloco do arquivo
+        - Como tabelaé residente na memória, acesso aleatório é rápido
+        - Problemas tamanhos:
+            - FAT-1, FAT-16, FAT-32 (máximo 4 blocos)
+
+* Implementação de sistemas de arquivos
+    - Cada arquivo tem um reistro que contém ponteiros para os primeiros
+      blocos e descrição do arquivo (veja em atributos)
+    - Arquivos maiores usam esquema de acesso indireto
+        - Sinle indirect
+        - Double indirect
+        - Triple indirect
+    - Pouco overhead para arquivos pequenos
+    - Acessos indiretos para arquivos Pequenos
+    - Acessos indiretor envolvem novas leituras do disco
+    - Acesso totalmente aleatório de arquivos grandes é lento:
+      princípio da localidade ameniza problema.
+    - Tamanho de arquivo MUITO escalável:
+        - 32 bits endereçam 4*10^9 blocos
+            - Bloco 4k, 16Tb disco, arquivo 4Tb
+            - Bloco 8k, 32Tb disco, arquivo 32Tb
+
+* Implementação de diretórios
+    - CP/M
+        - Primeiro SO para computadores pessoais de 8 bits
+        - Sistema para computadores e 8 bits
+        - 1 diretório para todos os arquivos
+        - Entrada de tamanho padrão
+            - Códio usuário (1 byte)
+            - Nome (8 bytes)
+            - Extensão (3 bytes)
+            - Extent (1 byte) - para mais de uma entrada para o mesmo
+              arquivo, diz numero da entrada.
+            - Livre (2 bytes)
+            - Blocos em uso (1 byte)
+            - Apontadores para disco (16 bytes)
+            - Arquivos grandes repetem entradas.
+
+                      U   NOME   EXT E FR B  Blocos no disp
+                     | |        |   | |  | |                |
+
+    - DOS (precursor do Windows)
+        - Originalmente para sistemas de 6 bits, disco de 10 Mb
+        - Diretório raiz é fixo (11 entradas no floppy)
+        - Outros são arquivos normais
+        - Estrutura hierárquica de diretórios
+        - Sem usuário
+        - Entrada tamanho padrão
+            - Nome (8 bytes)
+            - Extensão (3 bytes)
+            - Atributos (1 byte)
+            - Livre (2 bytes)
+            - Primeiro bloco na FAT (2 bytes)
+            - Tamanho (4 bytes)
+                    
+                          NOME   EXT A FR FT SIZ
+                       |        |   | |  |  |   |
+
+    - Windows 95
+        - 2 tipos de entrada (para compatibilidade)
+        - Entrada tamanho padrão
+            - Nome (8 bytes)
+            - Extensão (3 bytes)
+            - Atributos (1 byte)
+            - Campo NT (1 byte) - para múltiplas entradas
+            - Sec (1 byte)
+            - 16 bits superiores do primeiro bloco (2 bytes)
+            - Data e horário da última escrita (4 bytes)
+            - 16 bits inferiores do primeiro bloco (2 bytes)
+            - Tamanho (4 bytes)
+                    
+              NOME   EXT A N S     HIGH FAT      TS      LOW FAT     SIZE
+           |        |   | | | |                |    |               |    |
+    
+    - Unix
+        - Tabela de i-nodes em local fixo na partição (local no superbloco)
+        - Localização do i-node a partir do número é trivial
+        - Diretórios são todos arquivos normais
+        - I-nore para diretório raiz na primeira entrada
+        - I-nore contém infromação sobre o arquivo, não o diretório
+        - Entrada
+            - Número do I-node (2 bytes)
+            - Nome (16 bytes)
+
+    - NTFS (Windows 4 000 e depois)
+        - Em Unix, arquivo é conjunto de bytes
+        - Nos sistemas windos modernos, conjunto de atributos
+
+* Administração de espaço
+
+    - Questão importante é como o espaço em disco é administrado
+        - Sequência contínua de bytes
+        - Sequência de blocos (não necessariamente contínuos)
+
+    - Tamanho do bloco
+        - Candidatos
+            - Setor, trilha, cilindro
+            - Desperdício de espaço vs. taxa de transderência de dados
+              (Latência de movimento de braço + rotação + 
+              taxa de transferência de cada bloco)
+    
+    - Tamanho dos arquivos
+        - Unix (2005): mediana do tamanho dos programas é 2k
+        - Windows em sistemas científicos (Cornell), idem
+
+* Espaço livre
+    - Blocos com listas liadas de clovos livres
+        - Última entrada é próximo bloco da lista
+        - Apenas 1 bloco na memória de cada vez
+        - Simples implementação
+        - DIsco de 1Tb, bits para número do setor, setor de 1kb, lista
+          livre ocupa até 4Gb
+    - Vetor de bits
+        - 1 bit por bloco do disco
+        - Tamanho fixo
+        - Muito compacto, 1 bit por bloco
+            - Bloco de 1k contém indexação de 8 mil blocos (8Mb)
+            - Disco de 8Tb indexado com 125Mb de lista
+        - Implementação de busca mais complexa.
+
+
+* Compartilhamento de arquivos
+    - Quando usuários diferentes compartilham arquivo, é conveniente se
+      o arquivo aparece simultaneamente em diretórios diferentes
+    - Se é possível acessar arquivos por caminhos diferentes, 
+      estrutura de diretórios-vira DAG (não mais árvore)
+    - 2 maneiras
+        - Hard links: entradas em diretórios distintos compartilham
+          descritor do arquivo
+            - Assim lista de blocos não faz parte da entrada
+              d diretório
+            - UNIX implementa dessa maneira
+            - Muito mais difícil
+        - Soft links: arquivo que aponta para a localização do original
+
+    - Problemas
+        - Soft links
+            - Sobrecara de acesso: apenas na abertura
+            - Entradas órfãs de arquivos eliminados
+        - Hard links
+            - Remoção de arquivo deve cuidar para que arquivo real
+              seja removido apenas quando não há Mais "links"
+              (I-node tem contador de links)
+            - Usuáriooriinal continuará sendo cobrado pelo espaço
+            - Arquivo removido pelo dono continua sendo usado
+            - Ciclos
+        - Geral
+            - Back-ups devem cuidar para não duplicar trabalho e
+              reconstituição deve manter unidade.
+
+* Confiabilidade de sistemas de arquivos
+    - Arquivos são mais valiosos que o hardware
+    - Localização dos setores ruins do disco
+        - Hardware: setor do disco contém lista dos blocos ruins com
+          lista dos blocos substitutos. Controlador usa substitutos 
+          automaticamente.
+        - Software: sistema de arquivos contrói arquivo contendo os
+          blocos ruins.
+    - Atualização atômica
+        - Garantia que atualização parcial nunca acontece, mantendo
+          arquivos sempre consistentes.
+        - Se atualização falhar antes de completar, basta rodar
+          novamente.
+        - Discos com atualização atômica tolerante a falhas
+          são implementados usando 2 ou mais discos físicas ou
+          uma partição lógica.
+
+    - RAID
+        - Esquemas para operação de vários discos como se fosse 
+          apenas 1, criando um "disco virtual"
+        - Original "RAID5" - 1978
+        - Implementação por hardware (placa) ou software
+        
+        - RAID0
+            - 2 ou mais discos se juntam para criar um disco maior,
+              sem redundância ou recursos de recuperação.
+            - Aumento de capacidade de um sistema de arquivos.
+            - Leitura e escrita mais rápidos.
+        
+        - RAID1
+            - Disco espelho
+            - Copias os blocos do primeiro disco no segundo
+            - Falha simples recuperada
+                - Uma das cópias de setor com paridade ruim
+                - Um disco falha
+            - Leitura mais rápida (também pode fazer leitura em paralelo)
+
+        - RAID5
+            - "stripping" de vlocos com paridade distrivuída
+            - Conteúdo de bloco ausente pode ser recuperado com
+              blocos restantes
+            - Recupera falha em qualquer disco (mínimo 3 discos)
+            - Leitura e escrita mais rápidas: ((n-1)X)
+            - Performance com falha é reduzida
+            - Disco com falha pode ser reconstituído
+
+        - RAID6
+            - Semelhante a RAID5
+            - Paridade dupla distribuída (min. 4 discos)
+            - Até duas falhas
+            - Leitura e escrita mais rápida ((n-2)X)
+
+        - Outros RAIDS
+            - Bit stripping, byte stripping (RAID2, RAID3)
+            - RAIDS compostos ("nested"), (RAID 10 (1 e 0 em nível), etc.)
+
+    - Controle de concorrência
+        - Unix tradicional: requisição de leituras e escritas executadas
+          na ordem em que cheam
+        - Pode gerar problemas quando exclusão mútua é necessária
+        - Solução mais comum são travas ("locks)
+            - Em Unix, 1 por arquivo
+        - Apresenta os mesmos problemas que exclusão mútua
+        - Difença importante: enfase nos dados (ao invés de código)
+        - Os SGBDs foram feitos justamente para facilitar o controle
+          de concorrência e automatizá-lo nos softwares.
+
+    - Transações
+        - Travamento automático + atualização atômica
+            - Formato
+                begin transaction
+                atualizações
+                end transaction
+            - Nenhuma modificação acontece até o end "transaction"
+    
+    - Backup
+        - Dois objetivos
+            - Recuperação de desastres
+            - Recuperação de erros
+        - Potencialmente lentos e alto uso de espaço
+        - O que recuperar?
+            - Dump Físico vs Dump Lógico
+        
+        - Dump físico
+            - Disco inteiro é copiado (simples, mas demorado)
+            - Cuidado com blocos inválidos
+                - Se mantidos pelo hardware, ok
+                - Se mantidos pelo SO, programa de backu deve ter acesso
+                  a estruturas e evitar copiá-los.
+        
+        - Dump lógico
+            - Muitos sistemas não fazem backup de executáveis, 
+              arquivos temporários, arquivos especiais (/dev/ é até
+              perigoso)
+            - Em geral, é interessante especificar diretórios a
+              serem uardados.
+            - COmeça em um ou mais diretórios especificados e 
+              recursivamente percorre a estrutura de diretórios
+              salvando os intens encontrados.
+            - Não copiar arquivos especiais (pipes, etc.)
+
+        - Dumps incrementais
+            - não tem sentido fazer novo backup de arquivos não mudados.
+            - Dump completo + incrementos (ex: Mês + dia).
+            - Complica recuperação.
+            - Mesmo diretórios não modificados podem ser encontrados.
+
+    - Outras questões
+        - Unix pode ter "buracos" nos arquivos
+            - "open, write, seek, write".
+            - Core dumps têm espaço entre códio e pilha.
+            - Não queremos "buracos" preenchidos na recuperação.
+        - Cuidado com links para evitar duplicação (e loops)
+
+* Consistência do sistema de arquivos
+    - Sistemas de arquivos lêem/criam blocos, podem modificá-los e
+      depois são salvos.
+    - E se o programa morre antes dos blocos serem salvos?
+        - Mais grave é o i-node
+    - Maioria dos SOs têm programas para verificar consistência
+      do sistema de arquivos.
+        - Unix: fsck
+        - Windows: chfdisk
+
+    - fsck
+        - Consistência de blocos
+            - Duas tabelas com contadores para cada bloco, inicializados
+              com zero.
+                - Quantas vezes um bloco está presente em um arquivo
+                - Quantas vezes um bloco está presente na lista livre
+            - Prorama lê todos os i-nodes e percorre lista de blocos
+                - Toda vez que bloco é encontrado, atualiza primeira
+                  tabela
+            - Programa percorre lista livre
+                - Toda vez que bloco é encontrado atualiza seunda tabela
+            - BLocos bons: (1,0) ou (0,1)
+            - Missing block: (0,0), adicionados à lista livre
+            - Bloco com mais de uma ocorrência em lista livre (0,n)
+              - reconstrói a lista livre
+            - Blocos presentes em mais de um arquivo (m,0)
+                - Copia em dois blocos, associando cada um a um arquivo
+            - Blocos presentes em mais de um arquivo e lista livre(m,n)
+                - Tira da lista livre e copia como no (m,0)
+
+        - Consistência de arquivos-e diretórios
+            - Tabela de contadores, um por arquivo
+            - Percorre árvore de diretórios
+                - Incrementa contador toda vez que um inode é
+                  encontrado
+
+        - Outras ocorrências suspeitas que podem ser reportadas
+            - Diretórios com muitos arquivos (ex: mais de mil)
+            - Permissões estranhas (ex: 0007)
+            - Arquivos em diretório de usuário, mas pertencentes
+              ao root e com setuid ligado
