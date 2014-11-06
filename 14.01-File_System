@@ -1,0 +1,47 @@
+Sistema de arquivos
+=====================
+
+* Performance do sistema de arquivos
+    - Blocos sempre carregados na área de cache antes de lidos
+    - Tabela de hash (dispositivo + número do bloco) e lista ligada.
+    - Reposição semelhante aos algoritmos de memória virtual.
+        - Como chaces-Lidam com menos frequência, (e sempre chamada
+          de sistemas), é viável isar LRU.
+        - Hash + lista livre (quando bloco usado para fim)
+    - Considerações adicionais:
+        - Blocos mais antigos em geral são modiifcados.
+        - i-nodes são importantes para consistência do sistema (como
+          a cache está na memória, se houver falhas pode haver 
+          inconsistências por causa da perda. Modificações deveriam
+          ser gravadas imediatamente).
+    - Blocos devem ser divididos em categorias (i-nodes, blocos indiretos,
+      doretórios, blocos de dados completos, blocos de dados parciais)
+        - Blocos que não devem ser usados quando vão na frente, outros
+          no final (como blocos que são arquivos abertos para escrita,
+          mas não fechados).
+    - No Windows, o FAT era write-throug - tudo era imediatamente
+      guardado. Menos eficiente, mas mais seguro.
+
+    - Os caches podem fazer leitura preventiva de blocos, para tentar
+      "prever" o que será lido (porque ela costuma ser lida 
+      sequencialmente).
+    - Reduzindo movimentos do braço do disco
+        - Colocar blocos que podem ser utilizados sequencialente
+          próximos um do outro, de preferência no mesmo cilindro.
+        - Ex: se a lista livre for usada como bitma, 
+              podemos pegar o mais próximo.
+
+* Sistema de arquivos estruturados como logs
+    - Log strutured file systens - LSU (Berkeley)
+        - Aumento da diferença de performance motivou aumento das
+          caches.
+        - Enorme aumento das memórias.
+        - Caches devem conter porcentagem cada vez maiores de acessos
+
+        - Sistemas de arquivos são estruturados como buffers circulares.
+        - Sistemas de arquicos organizados como buffers circulares.
+        - Periodicamente, (ou quando necessário), todas as escritas
+          pendentes são coletadas em um segmento que é escrito de
+          uma só vez e de maneira contínua.
+        - Assim, as atualizações do segmento são mais frequentes,
+          mas só alterando o que foi feito.
