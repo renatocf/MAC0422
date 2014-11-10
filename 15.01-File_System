@@ -1,0 +1,269 @@
+Sistema de arquivos
+=====================
+
+* Performance do sistema de arquivos
+
+* CACHES
+    - Blocos sempre carregados na área de  cache antes de serem lidos.
+    - Tabela de hash (dispositivo + número do bloco) e lista ligada.
+    - Repositório semelhante aos algoritmos de memória virtual.
+        - Como chaces lidas com menos frequência (e sempre via chamada
+          de sistema) e viável o uso de LRU.
+        - Hash + lista livre (quando bloco usado vai para o fim).
+    
+    - Considerações adicionais
+        - Blocos mais antigos em geral são modificados
+        - i-nodes são importantes para a consistência do sistema, e
+          deveriam ser mantidos.
+
+    - Blocos devem ser divididos em categorias (i-nodes, blocos indiretos,
+      diretórios, blocos de dados completos, blocos de dados parciais).
+    - Blocos que são essenciais para o sistema devem ser implementados
+      via write-through.
+    - Mesmo assim, não devemos deixar blocos modificados sem serem
+      escritos por muito tempo.
+        - UNIX - syncs periódicos (0 segundos)
+        - Windows - write-though cache (i.e USB e FAT são seguros).
+
+    - Leitura preventiva de blocos
+        - Tentar colocar blocos na cache antes de sua leitura/escrita
+          ser requisitada.
+        - Ex: maioria dos arquivos lidos sequencialmente
+            - FS pode verm, quando bloco K é requisitado, se o bloco
+              K+1 está na cache, e carrá-lo em seguida (funciona por
+              causa do princípio da localidade).
+            - Esse sistema costuma ser desativado quando o programa
+              faz seeks (acesso aleatório).
+
+    - Reduzindo movimento do braço do disco
+        - Colocar blocos que odem ser utilizados sequencialmente 
+          próximos um do outro, de preferência no mesmo cilindro,
+          pois em geral a leitura exige carregar o i-node e, em
+          seguida, já ler o bloco.
+        - Variação: i-nodes no meio do disco.
+
+    - Sistemas de arquicos estruturados como log
+        - O sistema avalia um conjunto de modificações e os coloca
+          diretamente nos semgentos do disco, escrevendo uma série
+          de modificações ao mesmo tempo no log.
+        - O processo aumenta o fluxo do disco, usando-o quase 100%
+          do tempo.
+        - Uma vez encontrar i-node, o acesso é feito do modo usual
+        - Os i-nodes estão espalhados no disco, e o sistema utiliza
+          uma cache na memória para eles.
+        - Abertura de arquivos agora exige localizar o segmento
+          do i-node.
+        - Neste esquema, segmentos podem conter blocos obsoletos.
+        - Após falha, o sistem de log recupera a partir do último
+          checkpoint.
+
+* Segurança
+    - Segurança vs proteção
+        - Segurança é o problema geral.
+        - Proteção são os mecanismos para garantir a informação no
+          sistema.
+    - Objetivos
+        - Confencialidade dos dados
+            - Sistema deve garantir que dados de usuário só serão
+              conhecidos com sua permissão.
+        - Integridade dos dados
+            - Usuários não autorizados não devem poder modificar dados
+              sem permissão (inclui remoção e adição de dados).
+        - Disponibilidade
+            - Ninguém deve conseguir pertbar o sistema a ponto de 
+              tornar acesso aos dados impossível (denial of service).
+        - Privacidade
+            - Proteger usuários do uso indevido de informações a seu
+              respeito (padrões de uso, etc).
+
+    - Intrusos
+        - Usuários não autorizados no sistema
+        - Passivos vs Ativos: apenas olham os dados ou tentam 
+          modificá-los.
+        - 4 tipos de intruso:
+            - Curiosos ocasionais: pessoas com pouco conhecimento que
+              xeretam arquivos não protegidos (e.g em Unix é comum 
+              arquicos serem criados com permissão de leitura universal).
+            - "xeretas descolados": pessoas que são usuários do sistema
+              que consideram um desafio pessoal conseguir quebrar a 
+              sgurança da informação. Em geral, são muito habilidosos
+              e dispostos a usar muito tempo na tarefa.
+            - Estelionatários: programadores em bancos. Ameaças incluem
+              truncar (e não arredondar) transações, uso de fundos de
+              contas inativas, chantagem.
+            - Espionagem comercial ou militar: esforços sérios e muito
+              bem financiados para roubar programas, informações,
+              tecnologia, etc. Iniciativas podem envolver escutas de
+              linhas de transmissão, antenas para detectar sinais
+              eletromagnéticos do computador.
+        
+        - Esforço dedicado à segurança deve ser proporcional à qualidade
+          do possível intruso e do potencial dano a ser infringido.
+
+    - Programas maliciosos
+        - Vírus: pedaço de códgo que pode se reproduzir ntroduzindo 
+          uma cópia de-si mesmo em outros programas e causar vários
+          danos.
+            - Destruição de informação
+            - Envio de informação privada
+            - Inserção de informação
+            - 'Denial of service': consome recursos do sitema a ponto
+              de torná-lo inutilizável (CPU, disco, canais de comunicação,
+              etc).
+            - DDOS (Distributed Denial of service): vírus tem duas fases:
+              reprodução, onde se espalha pela rede, e ataque. Em data
+              pré-determinada, todas as cópias "acordam" e iniciam
+              ataque (ex: Webpage específica).
+
+        - Key lgger: monitora teclato procurando padrões (ex: conta
+          de e-mail seguida de sequência de caracteres).
+
+        - Warm:+diferente do vírus, que está incluído em outro programa
+          ou arquivo, é um programa independente.
+            - Worm pode se colocar no "startup directory".
+
+        - Cavlo de Tróia: programa que desempenha uma função, mas que
+          esconde funcionalidade secundária (lançar um worm, inserir
+          vírus, bisbilhotar sistema de arquivos, etc). Em geral,
+          baixados voluntariamente.
+        
+        - Bomba lóica: programa elaborado por programador do sistema
+          que exgem senha periódica. Se não receber a senha, a bomba
+          é "detonada". As ações podem envolver todo o tipo de dano
+          como remoção de arquivos (aleatórios ou não), encriptação
+          de arquivos, mudanças difíceis de identificar, etc.
+        
+        - Spyware: obtidos visitando-se sites na Web - instalando-se
+          vendo cookies ou por plugins no navegador.
+
+    - Um pouco de história
+        
+        - Multics (cavalo de Tróia)
+            - Não havia nenhuma segurança para processamento BATCH
+              (sistema foi feito para usuários interativos, 
+              processamento BATCH adicionado depois).
+            - Qualquer um podia submeter prgramas batch que lia conjunto
+              de cartões (sim, cartões de computador) e copiava seu
+              conteúdo no diretório De QUALQUER usuário.
+            - Para roubar arquicos de um usuário era só modificar
+              o fonte do editor de textos para copiar as informações
+              do outro usuário para cartões.
+
+        - TENEX (popular nos sistemas DEC-10)
+            - Um sistema com memória paginada, que analisava as
+              senhas um caracter por vez (dando erro se o caracter
+              estivesse errado).
+            - Para descobrir a senha, programas colocavam a senha
+              com o caracter a ser descoberto em uma página à frente
+              do restante. Para descobrir, bastaria ver se havia erro
+              ou falha de página (caracter correto).
+            - Com uma senha de tamanho N, era possível descobrir
+              em N*128 vezes (e não 128^N).
+
+        - OS360
+            - Era possível começar uma transferência de Dados de uma
+              fita e continuar computando em paralelo.
+            - O truque era emitr uma chamada ao sistema e esperar que
+              o sistema de arquivo carregasse. Então, bastava substituir
+              o endereço a ser procurado por algum outro path, e
+              então acessá-lo.
+
+        - UNIX
+            - Arquicos de senhas tinham leitura pública. Algoritmo
+              'one way' (usado para encriptar senhas). Usuários podiam
+              olhar arquivos e testar listas de senhas prováveis
+              aplicando algoritmo e vendo se codificação da senha
+              batia (nomes, dicionários, datas...)
+            - Lpr tem uma opção para remoção do arquivo após sua
+              impressão. Versões iniciais do Unix permitiam que 
+              qualquer um imprimisse e depois removesse arquivo de
+              senhas.
+            - Usuário podea linkar arquivo com nome "core" no seu
+              diretório ao arquivo de senhas. O introso então forçava
+              um "core dump" de um programa com SETUID. O sistema
+              escrevia o dump no arquivo "core", substituindo o
+              arquivo de senhas do sistema.
+            - Mkdir foo: mkdir é um programa com SETUID cujo dono 
+              é root. Mkdir cria primeiro cria o i-node para 'foo',
+              e após isso muda o "dono" do arquivo do UID efetivo
+              (root) para o real (usuário). Se o sistema fosse lento 
+              era possível ao usuário remover o inode de 'foo' após
+              o mknod, mas antes do chown. Então, trocando o arquivo
+              por outro (como o de senhas), que depois era entregue
+              ao usuário.
+
+        - 1988 - Robert T. Morris (Cornell) - warm com 2 programas:
+          o comando de bootstrap e o warm em si.
+            - Programa de bootstrap tinha 99 linhas em C, compilado
+              e executado no sistema sob ataque.
+            - Uma vez rodando, conectava-se à máquina de origem e
+              carregava o warm principal, executando-o.
+            - Após algumas etapas de camuflagem consultava tabelas de
+              rastreamento de seu hospedeiro e tentava espalhar o
+              comando bootstrap nelas.
+            - Esse programa derrubou o sistema de muitas universidades
+              dos EUA.
+
+    - Ataques
+        - Todo SO tem lacunas. Maneira normal de se testar é uso de
+          times de invasão (peritos contratados ou desafio).
+        - Ataques mais comuns
+            1. Requisitar páginas de memória, espaço em disco e
+               simplesmente investigar o conteúdo: muitos SOs não
+               apagam o conteúdo - apenas reutilizam.
+
+            2. Tentar chaadas de sistmas ilegais, ou chamadas legais
+               com parâmetros estranhos.
+
+            3. Faça login e clique DEL. O computador pode matar o
+               programa e, então, relogar.
+    
+    - Princípios de segurança
+        - Design de um sistema deve ser público:
+            - Supor que o intruso não vai saber como funciona o
+              sistema é uma ilusão (pior ainda atualmente, com a web).
+        - A ação padrão deve ser sempre negar o acess. Erros nos
+          quais um acesso autorizado é negao são relatados mais 
+          rapidamente do que casos de permissão de acesso não 
+          autorizado.
+        - Faça verificação contínua de permissões.
+        - A cada processo deve ser dado o mínimo possível de privilégio.
+        - Mecanismo de proteção deve ser simples, uniforme e implantado
+          o mais internamente no sistema.
+        - Mecanismos devem ser de fácil aceitação: usuários não 
+          adotam senhas muito complexas.
+
+    - Senhas
+        - Facil de quebrar pois difícil forçar usuário a escolher
+          boas senhas.
+        - Bloqueio de senhas fáceis.
+        - Substituição periódica obrigtória.
+        - Variação: perguntas e respostas armazenadas no sistema.
+        - Variação: resposta a desafio - algoritmos pré-escolhidos
+          (ex: x^2), computador faz perguntas periódicas e espera
+          resposta da aplicação do algoritmo.
+
+    - Identificação física
+        - Digitais
+        - Comprimento de dedos
+        - Identificação de retina
+
+    - Contramedidas
+        - Delays no processo de lgin dificultam tentativas exaustivas.
+          Delays crescentes melhor ainda.
+        - Registro de todos os logins: ataques podem ser detectados
+          por logins falhos sucessivos de alguma fonte.
+        - Armadilhas:
+            - loin fácil com senha fácil (silva, 1111): login nestas
+              contas alertam administradores que podem monitorar uso.
+            - Bugs fáceis de serem achados.
+
+    - Mecanismos de proteção
+        - Domínio = (objeto, direitos de acesso)
+        - Objeto: entidade do SO (arquivo, etc.)
+        - Direitos: permissões para efetuar cada oepração relativa
+          ao objeto.
+        - A cada momento processo executa em um domínio de proteção
+            - Há coleções-de objetos que ele pode acessar, cada um
+              com conjunto de direitos.
+            - Domínio pode ser mudado.
