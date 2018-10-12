@@ -1,0 +1,77 @@
+RESUMO SOBRE PROCESSOS (livro do Tanembaum) - Cap. 2 seção 1
+
+* Um processo é, basicamente, um programa em execução. 
+    - Associado a ele temos o espaço de endereço, uma lista de locais na 
+      memória onde o processo pode ler e escrever. O espaço de endereço contém
+      o programa executável, os dados do programa e sua pilha.
+    - Associado a ele também temos um conjunto de registradores, como o PC 
+      (program counter), stack pointer e outros registradores de hardware,
+      além de informações necessárias para rodar o programa.
+    - Processos que rodam no background para lidar com alguma atividade como
+      páginas na web, impressão e etc são chamados de daemons.
+* A tabela de processos é um vetor ou lista ligada com estruturas, uma para 
+  cada processo existente.
+* Um processo (suspenso) então consiste do espaço de enddereço (chamado de 
+  core image) e sua entrada da tabela de processos.
+* Se um processo pode criar um ou mais processos (seus filhos), que por sua
+  vez podem fazer o mesmo, chegamos em uma estrutura em árvore. Nela, processos
+  relacionados precisam se comunicar um com os outros, e isso é chamado de comuni-
+  cação interprocessos.
+
+* Em termos estritos, a CPU trabalha a cada instante em um programa por vez.
+  No entanto, em um segundo, ela é capaz de trabalhar em diversos programas,
+  dando a ilusão de que trabalha em mais de um. Isso é chamado de pseudoparalelismo.
+      - A mudança rápida entre processos é chamada de multiprogramação.
+      - Em contraste, há o paralelismo de hardware, em máquinas com multiproces-
+        sadores.
+        
+* A diferença entre um processo e um programa é crucial, apesar de sutil.
+  Um processo é uma atividade. Ele tem um programa, input, output e um estado.
+  
+* Criação de processos
+    - Há quatro eventos principais que levam à criação de um processo:
+      1. Inicialização do sistema
+      2. Execução de uma chamada de sistema que cria um processo por um processo
+         em execução
+      3. Requisição de um usuário para criar um novo processo
+      4. Inicialização de um processo batch
+    - No Minix, a única chamada que cria um processo é fork(). Ela cria um clone
+      exato do processo que a chama. Depois do fork, os dois processos têm a mesma
+      imagem de memória, as mesmas strings de environment e os mesmos arquivos abertos.
+      No geral, o filho chama então execve() para alterar sua imagem de memória e rodar
+      um novo programa.
+    - Pai e filho tem espaços de memória diferentes, de forma que a alteração feira
+      por um não é visível pelo outro. No entanto, é possível que um processo recém-
+      criado divida alguns dos recursos com seu criador, como arquivos abertos.
+      
+* Término de processos
+    - Processos terminam por conta de uma das quatro condições abaixo:
+      1. Saída normal (voluntária)
+      2. Saída de erro (involuntária)
+      3. Saída fatal (involuntária)
+      4. Morte por outro processo (involuntária)
+      
+ * Hierarquia de processos
+    - Um processo, seus filhos e outros descendentes podem formar um grupo de processos.
+    
+ * Estados de processos
+   1. Running (usando a CPU)
+   2. Ready (pode ser rodado, está parado para deixar outro processo rodar)
+   3. Blocked (não pode ser rodado até alguma outra coisa acontecer)
+   - Podemos ter 4 tipos de transição:
+   1. De running para blocked: processo descobre que não pode mais rodar.
+   2. De running para ready: escalonador escolhe outro processo para rodar.
+   3. De ready para running: processo escolhido pelo escalonador.
+   4. De blocked para ready: situação que bloqueava o processo é alterado e agora
+      ele pode rodar.
+      
+ * Threads
+   - Um processo tem um thread de execução. O thread tem um program counter que
+     guarda qual é a próxima instrução, registradores, uma pilha e um frame para
+     cada procedimento chamado que ainda não retornou.
+   - O modelo de threads é vantajoso por permitir múltiplas execuções no mesmo
+     environment por serem altamente independentes. 
+   - A mudança entre threads é muito mais rápida quando o gerenciamento de threads é
+     feito no user space do que quando precisamos fazer uma chamada de sistema.
+     No entanto, quando os threads estão no user space e um dos threads é bloqueado,
+     o kernel bloqueia todo o processo, já que nem sabe da existência dos outros threads.
