@@ -4,7 +4,7 @@ Escalonamento de processos
 * Quando se tem vários processos é necessária uma política para escolher
   o próximo processo a ter o controle da CPU.
 * Ganho muita força com a criação dos primeiros sistemas de janelas
-  (Machintosh e Windows)
+  (Macintosh e Windows)
 
 * Objetivos
     - Justiça: todos rodam.
@@ -13,7 +13,7 @@ Escalonamento de processos
     - Fluxo: maximizar o número de processos que completam (BATCH).
     - Minimizar tmpo para processos batch completarem.
 
-* Alguns os objeticos são contraditórios:
+* Alguns dos objetivos são contraditórios:
     - Fluxo x eficiência
     - Fluxo x tempo de resposta
 
@@ -25,7 +25,7 @@ Escalonamento de processos
       O processamento é parado, empilhando PSW e PC e saltando para
       o código que dará o controle para o escalonador de processos. 
       Isso evita que um usuário tenha controle do sistema o tempo todo.
-    - NOTA: MS Windoes por muito tempo não utilizou este mecanismo
+    - NOTA: MS Windows por muito tempo não utilizou este mecanismo
       (multiprocessamento cooperativo).
         - Ponto positivo: não precisa de hardware.
         - Ponto negativo: o compilador introduzia chamadas de sistema
@@ -47,7 +47,7 @@ Escalonamento de processos
     - Qual dos processos que estão prontos deve ter o controle da CPU
 
 * Preemptivo | Não preemptivo
-    - CPU pode : não pode ser retirada de um processo
+    - CPU pode | não pode ser retirada de um processo
     - Preempção ocorre ao custo de um overhead
         - No mínimo o estado do processo deve ser salvo.
         - Uma nova rotina precisará ser rodada.
@@ -58,7 +58,7 @@ Escalonamento de processos
       como uma leitura pronta de HD ou memória, entrada no teclado, etc.
 
 * Interrupção de relógio
-    - Instrução de hardware determinam tempo até que a próxima
+    - Instrução de hardware determina tempo até que a próxima
       interrupção seja gerada pelo relógio do sistema.
 
 * Algoritmos de escalonamento
@@ -68,7 +68,7 @@ Escalonamento de processos
         - Processo ao iniciar, determina quando sua tarefa precisa estar
           completa.
         - Planejamento complexo: envolve cuidadosa estimação de uso dos
-          recursosdo sistema (disco, CPU, etc.)
+          recursos do sistema (disco, CPU, etc.)
         - Sobrecarga de planejamento (sistemas em tempo real consomem
           CPU apenas para serem sistemas em tempo real).
     
@@ -85,13 +85,13 @@ Escalonamento de processos
           durante muito tempo, e os grandes (e mais caros) são maiores.
     
     - Shortest Remaining Time First (Batch)
-        - Espeialização do anterior, mas melhora a justiça.
+        - Especialização do anterior, mas melhora a justiça.
         - Um processo que falta apenas 1 min para ser concluído, mas
           durava 3 dias, não é interrompido para a execução de vários
           processos de uma hora.
     
     - Prioridade
-        - Número estavelece ordenação nos processos
+        - Número estabelece ordenação nos processos
         - Estática vs Dinâmica
           ^^^^^^^^    ^^^^^^^^-- Pode mudar durante a execução
              |                   do processo (enquanto roda)
@@ -168,8 +168,8 @@ Escalonamento de processos
              |        preempted                     Maior quantum
                                                      
     - Escalonamento garantido
-        - Tenta dar acada USUÁRIO uma fatia igual detempo
-        - Tempo do usuárioreal: tempo desde login / n
+        - Tenta dar a cada USUÁRIO uma fatia igual de tempo
+        - Tempo do usuário real: tempo desde login / n
         - Escolhe processo de usuário com fatia real mais distante do
           real (ou seja, dá prioridade para o usuário que usou uma
           pequena fatia de tempo em comparação com outros usuários).
@@ -193,7 +193,7 @@ Escalonamento de processos
           instruções (do ciclo fetch-decode-execute) duas instruções
           ao mesmo tempo. A execução, porém, continua em um só).
           Atualmente, há computadores com múltiplas CPUs com vários
-          cores com hiper-threading.
+          cores com hyper-threading.
         - Porém, os mesmos algoritmos e aplicam:
             - Assume-se SMP (simetrical multi processing)
             - Todos têm acesso à memória e aos mesmos recursos.
