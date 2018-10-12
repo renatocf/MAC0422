@@ -1,6 +1,6 @@
 ARQUITETURA COMPUTADOR
 
-* O computador modero é composto de várias partes
+* O computador moderno é composto de várias partes
     - Barramento: Canal de comunicação entre componentes do computador
     - CPU: Processamento e controle entre componentes
     - Memória: Memória secundária não durável
@@ -14,7 +14,7 @@ ARQUITETURA COMPUTADOR
   o disco rígido (muito lento)
 
 * Barramento
-    - Trilhas comunicando uma ou mais dispositivos apenas uma mensagem
+    - Trilhas comunicando um ou mais dispositivos, apenas uma mensagem
       de cada vez
 
 * Processador
@@ -22,14 +22,14 @@ ARQUITETURA COMPUTADOR
       privilegiado (algumas instruções só podem ser executadas no 
       modo de supervisão), multicore x singlecore (um core apenas
       será usado para a maioria dos algoritmos)
-    - Trap (interrupção): sinal eletrônico que faz o proessador entrar
+    - Trap (interrupção): sinal eletrônico que faz o processador entrar
       em modo privilegiado e muda o programa para um endereço pré-
       especificado. Cada interrupção faz com que seja realizada alguma
       ação, sendo que elas estão armazenadas em um vetor de 
       interrupções. Essas rotinas e o vetor são carregados assim
       que acontece o boot do SO.
-
-* Memoria
+      
+* Memória
     - Proteção e troca de contexto: memória virtual, código realocável
     - A memória virtual é uma abstração: ela é, de fato, separada usando
       partes. Porém, existe um hardware específico que permite mudar a
@@ -38,7 +38,7 @@ ARQUITETURA COMPUTADOR
       acessar. Se ele sair da região, é dado um sinal específico que
       "mata" o programa (falha de segmentação)
 
-* DIscos
+* Discos
     - Prato, superfície, cilindros, trilhas, setores, cabeças.
     
                                         .------ cabeça para
@@ -52,7 +52,7 @@ ARQUITETURA COMPUTADOR
         '------------------------------' --'
         Setor: mínimo de bytes que podem ser escritos na memória
     
-    - A taxa de transferência para o disco é muito lento, porque 
+    - A taxa de transferência para o disco é muito lenta, porque 
       a rotação do disco demora em taxa de milissegundos
 
 * Outros dispositivos de I/O:
@@ -114,12 +114,16 @@ ARQUITETURA COMPUTADOR
       CPU e ficam bloqueados enquanto esperam as (demoradas) ações
       de IO).
     - O sistema mostrado acima é o pseudo-paralelismo da CPU.
+    - Paralelismo real nos periféricos.
+    - NÃO é tempo real.
     - Threads (processos leves): linha de processamento distinta,no
       contexto de registradores, com mesmo estado de memória. Usar
       threads é diferente de criar processos filhos, porque neste
       caso cada um tem seu espaço de memória, e naquele, a memória
       é compartilhada dentro do processo.
-
+    - Diferença entre processo e threads: thread compartilha os recursos 
+    (tem problema de sincronização), processos são exclusivos.
+    
     - Tabela de processos: guarda quais processos estão rodando, e a
       ordem em que são trocados.
     - Processos não podem assumir nada em relação a tempo real (porque
@@ -143,7 +147,8 @@ ARQUITETURA COMPUTADOR
 
 * Processos (Minix)
     - Processos podem se comunicar
-    
+    - Todos os processos são organizados em árvore (mata os pais -> mata os filhos; 
+    exceto usando "nohup", que faz o processo deixar de ser filho da sessão)
     - Organização hierárquiva (Minix/Unix/Linux)
         - UID (User ID)
         - Obs: instrução 'fork' cria novo processo (clonado a partir do 
@@ -156,7 +161,8 @@ ARQUITETURA COMPUTADOR
             - Arquivos: Escrevendo entre um e outro
             - Pipes (|): Muito mais rápido que usar os arquivos, porque
               cria-se um buffer na memória, em vez de um arquivo no
-              disco.
+              disco. Pipe é um pseudo arquivo implementado na memória contectando
+              dois processos (um escreve e outro lê)
             - Sinais (signal): espécie de sinal assíncrono que faz com 
               que o receptor tenha código desviado para endereço 
               pré-determinado. 
@@ -179,10 +185,10 @@ ARQUITETURA COMPUTADOR
         - Bloco (disco): lê no apontador, e permite acesso aleatório.
           Eles pode ser alterado usando "seek" (para mudar o local)
           ou ler (com "read").
-          Caracter (teclado, tela, etc.): só podem ser usados para ler 
+          Caractere (teclado, tela, etc.): só podem ser usados para ler 
           ou escrever diretamente (read/write), pois não é possível
           "voltar" para o passado.
-        - Todos os arquivos tÊm um DESCRITOR DE ARQUIVO.
+        - Todos os arquivos têm um DESCRITOR DE ARQUIVO.
         - Standard input/output: descritores de arquivo 0 e 1
           (geralmente, são o teclado e a tela)
         - Montar/desmontar (mount/umount): utilizado para acesso a
@@ -226,7 +232,7 @@ ARQUITETURA COMPUTADOR
       comunicação por mensagens. As mensagens são implementadas usando uma
       chamada de sistemas específica. Essas mensagens têm uma estrutura 
       específica, em que é guardada um ponteiro para o texto e o processo
-      que enviou. A pessoa que enviou é bloqueado enquando ocorre a
+      que enviou. A pessoa que enviou é bloqueada quando ocorre a
       mensagem. O recebedor terá a mensagem COPIADA dentro do outro 
       processo, para ser lida. Quem implementa esse envio é o SO, fazendo
       a parte do baixo nível. O processo que ENVIA manda uma mensagem
