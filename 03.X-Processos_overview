@@ -1,4 +1,5 @@
-RESUMO SOBRE PROCESSOS (livro do Tanembaum) - Cap. 2 seção 1
+RESUMO SOBRE PROCESSOS (livro do Tanembaum)
+Cap. 2 seção 1 - Introdução aos processos
 
 * Um processo é, basicamente, um programa em execução. 
     - Associado a ele temos o espaço de endereço, uma lista de locais na 
