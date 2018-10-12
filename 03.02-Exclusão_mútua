@@ -6,8 +6,9 @@ Exclusão mútua
     - Em muitos SOs, quando processos trabalham juntos, eles
       compartilham algum armazenamento comum onde podem ler e escrever.
     - Quando processos funcionam de maneira indepedente, pode ocorrer
-      um "data race", em que um processo atualiza uma região que estava
-      sendo usada pelo outro, gerando inconsistências.
+      um "data race" ou condição de concorrência, em que um processo 
+      atualiza uma região que estava sendo usada pelo outro, gerando
+      inconsistências.
     
     - Ex: duas threads atualizam a variavel global
         - Situação ideal:
@@ -39,7 +40,7 @@ Exclusão mútua
             - Só um processo deve entrar na região crítica de cada vez.
             - Não deve ser feita nenhuma hipótese sobre a velocidade
               relativa dos processo.
-            - Nenhum processo executando fora de sua região crítica dev
+            - Nenhum processo executando fora de sua região crítica deve
               bloquear outro processo.
             - Nenhum processo deve esperar um tempo arbitrariamente
               longo para entrar na sua região crítica (adiamento
@@ -290,7 +291,7 @@ Exclusão mútua
                 // região não crítica
             }
         
-        - Ex: problemas com progutores e consumidores.
+        - Ex: problemas com produtores e consumidores.
         
             Semaforo_binario mutex; /* exclusão mútua */
             Semaforo_contador vazio = TAMBUFFER; /* Controle buffer */
@@ -348,7 +349,7 @@ Exclusão mútua
             - "sai" do monitor e entra em uma fila associada à variável
               da operação WAIT.
             - Reativado pela operação SIGNAL.
-        - Processo pode emitir SIGNALlogo antes de sair do monitor
+        - Processo pode emitir SIGNAL logo antes de sair do monitor
             - Quem estiver esperando na fila entra em seguida (se
               houver).
         
