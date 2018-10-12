@@ -2,7 +2,7 @@ Comunicação entre processos
 =============================
 
 * Semáforos, monitores
-    - Para memória compartilhada
+    - Apenas para memória compartilhada
 * Envio de mensagens
     - send(destino, mensagem);
     - receive(fonte, &mensagem); /* fonte pode ser Pid ou ANY */
@@ -16,7 +16,7 @@ Comunicação entre processos
     - Confirmação
         - Mensagem de confirmação para certificação de entrega.
         - Retransmissão se certificação for muito demorada.
-        - Mensagens fuplicadas devem ser ignoradas (contar mensagens).
+        - Mensagens duplicadas devem ser ignoradas (contar mensagens).
           Isso é necessário porque, se uma mensagem demorar muito,
           ela pode ser reenviada. Porém, no final, ambas podem chegar.
     - Endereçamento
@@ -28,7 +28,7 @@ Comunicação entre processos
         - Mailbox: continua agindo e só bloqueia quando receber uma
           mensagem de volta. Porém, para isso, é necessário haver um
           pool que guarde as mensagens recebidas. Isso é ruim para um
-          SO, pois gasta memória do sistema, e seria sucetível a um
+          SO, pois gasta memória do sistema, e seria suscetível a um
           ataque DDoS (se fossem geradas várias mensagens
           constantemente).
         - Minix: quando é enviada uma mensagem, o programa é bloqueado
