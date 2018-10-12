@@ -1,0 +1,65 @@
+O PROBLEMA DOS FILÓSOFOS COMILÕES
+
+* Problema clássico de comunicação entre processos
+* Vários filósofos em uma mesa, pratos de macarrão chinês. 
+  1 paurizinho entre cada 2 filósofos. Cada filósofo precisa
+  pegar 2 pauzinhos pra comer.
+  
+* Uma solução que não funciona:
+```
+#define N 5
+Philosopher(i) {
+    int l;
+    think();
+    take_chopstick(i);
+    take_chopstick(i+1) % N);
+    eat();
+    put_chopstick(i);
+    put_chopstick(i+1);
+}
+```
+
+    - Problemas?
+        * Todos pegam esquerdo/direito
+        * Ninguém faz mais nada: deadlock!
+        * E se coloca de volta pauzinho? Adiamento infinito
+        * Espera aleatória? Adimento menos provável, mas possível
+        * A solução ideal envolve o uso de semáforos
+        
+ ```
+ #define N 5
+ #define LEFT (i-1)%N
+ #define RIGHT (i+1)%N
+ #define THINKING 0
+ #define HUNGRY 1
+ #define EATING 2
+ Semaphore mutex = 1;
+ Semaphore s[n];
+ Philosopher(int i) {
+     while (TRUE) {
+         think();
+         take_chopsticks(i);
+         eat();
+         put_chopsticks(i);
+     }
+}
+take_chopstick(int i) {
+    p(mutex);
+    state[i] = HUNGRY;
+    test(i);
+    v[mutex];
+    p[s[i]];
+}
+put_chopsticks(int i) {
+    p(mutex);
+    state[i] = THINKING;
+    test(LEFT); // vizinho come?
+    test(RIGHT); // vizinho come?
+    v[mutex];
+}
+test (int i) {
+    if (state[i] == HUNGRY && state[LEFT] == EATING && state[RIGHT] == EATING) {
+        state[i] = EATING;
+        v[s[i]];
+    }
+}
